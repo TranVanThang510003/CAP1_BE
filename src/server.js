@@ -11,7 +11,7 @@ const hostname = process.env.HOST_NAME || 'localhost';
 
 // Cấu hình middleware để parse JSON từ request body
 app.use(express.json());
-
+app.use('/uploads', express.static('uploads'));
 // Cấu hình CORS
 app.use(cors());
 

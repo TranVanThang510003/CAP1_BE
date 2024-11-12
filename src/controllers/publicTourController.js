@@ -202,77 +202,81 @@ const getToursByCreator = async (creatorId) => {
 
 const createTour = async (req, res) => {
     try {
-        const {
-            PUCLIC_TOUR_NAME,
-            PUCLIC_TOUR_TYPE, // Chuyển thành TOUR_TYPE_ID trong DB
-            DESCRIPIONS_HIGHLIGHT, // Chuyển thành HIGHLIGHTS trong DB
-            DESCRIPTIONS, // Chuyển thành DESCRIPTION trong DB
-            DURATION,
-            adultPrice, // Chuyển thành PRICE_ADULT trong DB
-            childPrice // Chuyển thành PRICE_CHILD trong DB
-        } = req.body;
-
-        // Gán giá trị mặc định cho DURATION nếu không có
-        const durationValue = DURATION !== undefined ? parseInt(DURATION, 10) : 1;
-
-        // In ra các dữ liệu đầu vào để kiểm tra
-        console.log("Dữ liệu nhận được từ request body:", {
-            PUCLIC_TOUR_NAME,
-            PUCLIC_TOUR_TYPE,
-            DESCRIPIONS_HIGHLIGHT,
-            DESCRIPTIONS,
-            DURATION: durationValue,
-            adultPrice,
-            childPrice
-        });
-        
-        // Kiểm tra các trường yêu cầu
-        if (
-            !PUCLIC_TOUR_NAME ||
-            !PUCLIC_TOUR_TYPE ||
-            !DESCRIPIONS_HIGHLIGHT ||
-            !DESCRIPTIONS ||
-            !adultPrice ||
-            !childPrice
-        ) {
-            return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin tour.' });
-        }
-
-        // Chuyển đổi kiểu dữ liệu khi cần
-        const parsedAdultPrice = parseFloat(adultPrice);
-        const parsedChildPrice = parseFloat(childPrice);
-
-        // Kiểm tra chuyển đổi thành công
-        if (isNaN(durationValue) || isNaN(parsedAdultPrice) || isNaN(parsedChildPrice)) {
-            return res.status(400).json({ message: 'Thời lượng và giá phải là số hợp lệ.' });
-        }
-
-        // Kết nối tới cơ sở dữ liệu và thực hiện truy vấn
-        const pool = await connectToDB();
+      const {
+        PUCLIC_TOUR_NAME,
+        PUCLIC_TOUR_TYPE,
+        DESCRIPIONS_HIGHLIGHT,
+        DESCRIPTIONS,
+        DURATION,
+        adultPrice,
+        childPrice,
+        CREATED_BY, // Assuming this is included in req.body or comes from authenticated session
+      } = req.body;
+      
+      const IMAGE = req.file; // Uploaded file
+      
+      // Validate required fields
+      if (
+        !PUCLIC_TOUR_NAME ||
+        !PUCLIC_TOUR_TYPE ||
+        !DESCRIPIONS_HIGHLIGHT ||
+        !DESCRIPTIONS ||
+        !adultPrice ||
+        !childPrice ||
+        !CREATED_BY // Ensure CREATED_BY is provided
+      ) {
+        return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin tour.' });
+      }
+      
+      const durationValue = DURATION !== undefined ? parseInt(DURATION, 10) : 1;
+      const parsedAdultPrice = parseFloat(adultPrice);
+      const parsedChildPrice = parseFloat(childPrice);
+  
+      if (isNaN(durationValue) || isNaN(parsedAdultPrice) || isNaN(parsedChildPrice)) {
+        return res.status(400).json({ message: 'Thời lượng và giá phải là số hợp lệ.' });
+      }
+  
+      // Insert new tour and retrieve TOUR_ID
+      const pool = await connectToDB();
+      const insertTour = await pool
+        .request()
+        .input('TOUR_NAME', sql.NVarChar, PUCLIC_TOUR_NAME)
+        .input('TOUR_TYPE_ID', sql.NVarChar, PUCLIC_TOUR_TYPE)
+        .input('HIGHLIGHTS', sql.NVarChar, DESCRIPIONS_HIGHLIGHT)
+        .input('DESCRIPTION', sql.NVarChar, DESCRIPTIONS)
+        .input('DURATION', sql.Int, durationValue)
+        .input('PRICE_ADULT', sql.Money, parsedAdultPrice)
+        .input('PRICE_CHILD', sql.Money, parsedChildPrice)
+        .input('CREATED_BY', sql.Int, CREATED_BY) // Add CREATED_BY here
+        .query(
+          `INSERT INTO TOUR (TOUR_NAME, TOUR_TYPE_ID, HIGHLIGHTS, DESCRIPTION, DURATION, PRICE_ADULT, PRICE_CHILD, CREATED_BY) 
+           OUTPUT INSERTED.TOUR_ID
+           VALUES (@TOUR_NAME, @TOUR_TYPE_ID, @HIGHLIGHTS, @DESCRIPTION, @DURATION, @PRICE_ADULT, @PRICE_CHILD, @CREATED_BY)`
+        );
+  
+      const newTourId = insertTour.recordset[0].TOUR_ID;
+  
+      // Save image information if an image was uploaded
+      if (IMAGE) {
+        const imageUrl = `uploads/${IMAGE.filename}`; // Path where the image is stored
+  
         await pool
-            .request()
-            .input('TOUR_NAME', sql.NVarChar, PUCLIC_TOUR_NAME)
-            .input('TOUR_TYPE_ID', sql.NVarChar, PUCLIC_TOUR_TYPE)
-            .input('HIGHLIGHTS', sql.NVarChar, DESCRIPIONS_HIGHLIGHT)
-            .input('DESCRIPTION', sql.NVarChar, DESCRIPTIONS)
-            .input('DURATION', sql.Int, durationValue) // Truyền giá trị mặc định nếu không có
-            .input('PRICE_ADULT', sql.Money, parsedAdultPrice)
-            .input('PRICE_CHILD', sql.Money, parsedChildPrice)
-            .query(
-                `INSERT INTO TOUR 
-                (TOUR_NAME, TOUR_TYPE_ID, HIGHLIGHTS, DESCRIPTION, DURATION, PRICE_ADULT, PRICE_CHILD) 
-                VALUES (@TOUR_NAME, @TOUR_TYPE_ID, @HIGHLIGHTS, @DESCRIPTION, @DURATION, @PRICE_ADULT, @PRICE_CHILD)`
-            );
-
-        res.status(201).json({ message: 'Tour đã được tạo thành công.' });
+          .request()
+          .input('TOUR_ID', sql.Int, newTourId)
+          .input('IMAGE_URL', sql.NVarChar, imageUrl)
+          .query(
+            `INSERT INTO TOUR_IMAGES (TOUR_ID, IMAGE_URL) VALUES (@TOUR_ID, @IMAGE_URL)`
+          );
+      }
+  
+      res.status(201).json({ message: 'Tour đã được tạo thành công.' });
     } catch (error) {
-        // In chi tiết lỗi ra console để theo dõi
-        console.error("Error creating tour:", error);
-
-        // Trả về thông tin lỗi chi tiết cho frontend
-        res.status(500).json({ message: 'Có lỗi xảy ra khi tạo tour.', error: error.message, stack: error.stack });
+      console.error("Error creating tour:", error);
+      res.status(500).json({ message: 'Có lỗi xảy ra khi tạo tour.', error: error.message });
     }
-};
+  };
+  
+  
 
 
 

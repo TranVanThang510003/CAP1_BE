@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+
 
 // Import các controller
 const { getUserById, updateUser } = require('../controllers/UserController');
@@ -56,9 +58,10 @@ router.get('/public-tours/by-creator/:creatorId', async (req, res) => {
         res.status(500).json({ message: 'Lỗi khi lấy danh sách tour theo người tạo', error: error.message });
     }
 });
+const upload = multer({ dest: 'uploads/' }); // Đường dẫn lưu ảnh tạm thời
 
 // Route tạo mới một tour chỉ cho phép nhân viên (staff) thực hiện
-router.post('/createtour', authenticateUser, verifyStaffRole, createTour);
+router.post('/createtour', authenticateUser, verifyStaffRole, upload.single('IMAGE'), createTour);
 // Route cho khách sạn
 router.get('/hotels', hotelController.getAllHotels);
 router.get('/hotels/:id', hotelController.getHotelById);
