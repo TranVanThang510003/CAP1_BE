@@ -13,6 +13,7 @@ const funActivityController = require('../controllers/funActivityController');
 const initPaymentRoutes = require('../controllers/paymentController');
 const { getAllInvoices, getBookingsByStaff } = require('../controllers/staffcontroller');
 const { verifyStaffRole,authenticateUser } = require('../middlewares/authMiddleware');
+const locationController = require('../controllers/locationController');
 
 // Route thông tin người dùng
 router.get('/users/:id', getUserById);
@@ -71,5 +72,14 @@ router.get('/activities', funActivityController.getAllActivities);
 
 // Route thanh toán
 initPaymentRoutes(router);
+
+// Route để lấy danh sách các tỉnh
+router.get('/provinces', locationController.getProvinces);
+
+// Route để lấy danh sách các quận/huyện theo mã tỉnh
+router.get('/districts/:provinceId', locationController.getDistricts);
+
+// Route để lấy danh sách các xã theo mã huyện
+router.get('/wards/:districtId', locationController.getWards);
 
 module.exports = router;

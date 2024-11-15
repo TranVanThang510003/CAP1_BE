@@ -43,7 +43,7 @@ function initPaymentRoutes(app) {
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
       amount: parseInt(total_price),
-      callback_url: 'https://4630-2402-800-6205-8752-b187-17df-ed6a-8f0c.ngrok-free.app/callback',
+      callback_url: 'https://600b-103-99-246-49.ngrok-free.app/callback',
       description: `Payment for tour #${tour_id}`,
       bank_code: '',
     };
@@ -147,7 +147,7 @@ function initPaymentRoutes(app) {
           .input('childCount', sql.Int, children)
           .input('totalPrice', sql.Decimal(18, 2), totalPrice)
           .input('status', sql.NVarChar, status)
-          .input('description', sql.NVarChar, `Payment for order #${appTransId}`)
+          .input('description', sql.NVarChar, `Payment for order TourID #${tourId}`)
           .query(insertBookingQuery);
   
         console.log("Booking successfully updated with status:", status);

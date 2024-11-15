@@ -4,6 +4,7 @@ require('dotenv').config();
 const cors = require('cors');
 const path = require('path');
 
+
 const app = express();
 const port = process.env.PORT || 3000;
 const hostname = process.env.HOST_NAME || 'localhost';
@@ -20,6 +21,8 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 // Sử dụng route API
 app.use('', apiRoutes);
+
+
 
 // Khởi tạo server
 app.listen(port, hostname, () => {

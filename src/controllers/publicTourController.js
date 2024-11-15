@@ -1,6 +1,6 @@
 const sql = require('mssql');
 const { connectToDB } = require('../config/db');
-
+const axios = require('axios');
 // Hàm lấy danh sách các tour
 // src/controllers/publicTourController.js
 const getAllTours = async (req, res) => {
@@ -13,15 +13,14 @@ const getAllTours = async (req, res) => {
             T.DESCRIPTION AS description,
             T.PRICE_ADULT as priceAdult,
             T.CREATED_BY as createBy,
-            T.DURATION AS duration,
+            DATEDIFF(DAY, T.START_DATE, T.END_DATE) AS duration,  -- Tính DURATION bằng số ngày
             T.LAST_UPDATED AS lastUpdated,
             I.IMAGE_URL AS imageUrl,
-            L.LOCATION_NAME AS location,
+            T.PROVINCE AS location,  -- Lấy trực tiếp từ trường PROVINCE
             ISNULL(ReviewData.reviewCount, 0) AS reviewCount,
             ISNULL(ReviewData.averageRating, 0) AS averageRating
         FROM [TRIPGO1].[dbo].[TOUR] T
         LEFT JOIN [TRIPGO1].[dbo].[TOUR_IMAGES] I ON T.TOUR_ID = I.TOUR_ID
-        LEFT JOIN [TRIPGO1].[dbo].[TOUR_LOCATION] L ON T.TOUR_ID = L.TOUR_ID
         OUTER APPLY (
             SELECT 
                 COUNT(RV.REVIEW_ID) AS reviewCount,
@@ -41,8 +40,8 @@ const getAllTours = async (req, res) => {
       console.error('Error fetching tour list:', error.message);
       res.status(500).json({ message: 'Lỗi khi lấy danh sách tour', error: error.message });
     }
-  };
-  
+};
+
 
 // Hàm lấy chi tiết một tour
 const getTourById = async (req, res) => {
@@ -66,17 +65,16 @@ const getTourById = async (req, res) => {
                     T.PRICE_ADULT AS priceAdult, -- Giá cho người lớn
                     T.PRICE_CHILD AS priceChild, -- Giá cho trẻ em
                     T.CREATED_BY AS createdBy, -- ID người tạo để so sánh
-                    T.DURATION AS duration,
+                     DATEDIFF(DAY, T.START_DATE, T.END_DATE) AS duration,  -- Tính DURATION bằng số ngày
                     T.LAST_UPDATED AS lastUpdated,
                     I.IMAGE_URL AS imageUrl,
-                    L.LOCATION_NAME AS location,
+                    CONCAT(T.ADDRESS, ', ', T.WARD, ', ', T.DISTRICT, ', ', T.PROVINCE) AS location,  -- Kết hợp địa chỉ
                     ISNULL(ReviewData.reviewCount, 0) AS reviewCount,
                     ISNULL(ReviewData.averageRating, 0) AS averageRating,
                     LatestReview.latestComment AS latestComment,
                     LatestReview.userName AS userName
                 FROM [TRIPGO1].[dbo].[TOUR] T
                 LEFT JOIN [TRIPGO1].[dbo].[TOUR_IMAGES] I ON T.TOUR_ID = I.TOUR_ID
-                LEFT JOIN [TRIPGO1].[dbo].[TOUR_LOCATION] L ON T.TOUR_ID = L.TOUR_ID
                 OUTER APPLY (
                     SELECT 
                         COUNT(RV.REVIEW_ID) AS reviewCount,
@@ -112,7 +110,7 @@ const getTourById = async (req, res) => {
             duration: tourData.duration,
             lastUpdated: tourData.lastUpdated,
             imageUrl: tourData.imageUrl ? `/${tourData.imageUrl}` : null,
-            location: tourData.location,
+            location: tourData.location, // Địa chỉ đầy đủ
             reviewCount: tourData.reviewCount,
             averageRating: tourData.averageRating,
             latestComment: tourData.latestComment,
@@ -163,10 +161,10 @@ const getToursByCreator = async (creatorId) => {
                     T.TOUR_NAME AS name,
                     T.DESCRIPTION AS description,
                     T.PRICE_ADULT AS priceAdult,
-                    T.DURATION AS duration,
+                     DATEDIFF(DAY, T.START_DATE, T.END_DATE) AS duration,  -- Tính DURATION bằng số ngày
                     T.LAST_UPDATED AS lastUpdated,
                     I.IMAGE_URL AS imageUrl,
-                    L.LOCATION_NAME AS location,
+                    T.PROVINCE AS location, -- Lấy tên tỉnh từ trường PROVINCE trong bảng TOUR
                     ISNULL(ReviewData.reviewCount, 0) AS reviewCount,
                     ISNULL(ReviewData.averageRating, 0) AS averageRating,
                     U.USERNAME AS createdBy
@@ -174,8 +172,6 @@ const getToursByCreator = async (creatorId) => {
                     [TRIPGO1].[dbo].[TOUR] T
                 LEFT JOIN 
                     [TRIPGO1].[dbo].[TOUR_IMAGES] I ON T.TOUR_ID = I.TOUR_ID
-                LEFT JOIN 
-                    [TRIPGO1].[dbo].[TOUR_LOCATION] L ON T.TOUR_ID = L.TOUR_ID
                 LEFT JOIN 
                     [TRIPGO1].[dbo].[USERS] U ON T.CREATED_BY = U.USER_ID
                 OUTER APPLY (
@@ -200,83 +196,106 @@ const getToursByCreator = async (creatorId) => {
 
 
 
+
+
+const getLocationName = async (code, type) => {
+    try {
+        const url = `https://provinces.open-api.vn/api/${type}/${code}`;
+        const response = await axios.get(url);
+        return response.data.name;
+    } catch (error) {
+        console.error(`Lỗi khi lấy tên ${type} với mã ${code}:`, error.response ? error.response.data : error.message);
+        return null;
+    }
+};
+
+
 const createTour = async (req, res) => {
     try {
-      const {
-        PUCLIC_TOUR_NAME,
-        PUCLIC_TOUR_TYPE,
-        DESCRIPIONS_HIGHLIGHT,
-        DESCRIPTIONS,
-        DURATION,
-        adultPrice,
-        childPrice,
-        CREATED_BY, // Assuming this is included in req.body or comes from authenticated session
-      } = req.body;
-      
-      const IMAGE = req.file; // Uploaded file
-      
-      // Validate required fields
-      if (
-        !PUCLIC_TOUR_NAME ||
-        !PUCLIC_TOUR_TYPE ||
-        !DESCRIPIONS_HIGHLIGHT ||
-        !DESCRIPTIONS ||
-        !adultPrice ||
-        !childPrice ||
-        !CREATED_BY // Ensure CREATED_BY is provided
-      ) {
-        return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin tour.' });
-      }
-      
-      const durationValue = DURATION !== undefined ? parseInt(DURATION, 10) : 1;
-      const parsedAdultPrice = parseFloat(adultPrice);
-      const parsedChildPrice = parseFloat(childPrice);
-  
-      if (isNaN(durationValue) || isNaN(parsedAdultPrice) || isNaN(parsedChildPrice)) {
-        return res.status(400).json({ message: 'Thời lượng và giá phải là số hợp lệ.' });
-      }
-  
-      // Insert new tour and retrieve TOUR_ID
-      const pool = await connectToDB();
-      const insertTour = await pool
-        .request()
-        .input('TOUR_NAME', sql.NVarChar, PUCLIC_TOUR_NAME)
-        .input('TOUR_TYPE_ID', sql.NVarChar, PUCLIC_TOUR_TYPE)
-        .input('HIGHLIGHTS', sql.NVarChar, DESCRIPIONS_HIGHLIGHT)
-        .input('DESCRIPTION', sql.NVarChar, DESCRIPTIONS)
-        .input('DURATION', sql.Int, durationValue)
-        .input('PRICE_ADULT', sql.Money, parsedAdultPrice)
-        .input('PRICE_CHILD', sql.Money, parsedChildPrice)
-        .input('CREATED_BY', sql.Int, CREATED_BY) // Add CREATED_BY here
-        .query(
-          `INSERT INTO TOUR (TOUR_NAME, TOUR_TYPE_ID, HIGHLIGHTS, DESCRIPTION, DURATION, PRICE_ADULT, PRICE_CHILD, CREATED_BY) 
-           OUTPUT INSERTED.TOUR_ID
-           VALUES (@TOUR_NAME, @TOUR_TYPE_ID, @HIGHLIGHTS, @DESCRIPTION, @DURATION, @PRICE_ADULT, @PRICE_CHILD, @CREATED_BY)`
-        );
-  
-      const newTourId = insertTour.recordset[0].TOUR_ID;
-  
-      // Save image information if an image was uploaded
-      if (IMAGE) {
-        const imageUrl = `uploads/${IMAGE.filename}`; // Path where the image is stored
-  
-        await pool
-          .request()
-          .input('TOUR_ID', sql.Int, newTourId)
-          .input('IMAGE_URL', sql.NVarChar, imageUrl)
-          .query(
-            `INSERT INTO TOUR_IMAGES (TOUR_ID, IMAGE_URL) VALUES (@TOUR_ID, @IMAGE_URL)`
-          );
-      }
-  
-      res.status(201).json({ message: 'Tour đã được tạo thành công.' });
+        console.log("Request body:", req.body); // Log dữ liệu từ client
+        console.log("Uploaded file:", req.file); 
+
+        // Log LANGUAGE từ req.body để kiểm tra
+        console.log("LANGUAGE in req.body:", req.body.LANGUAGE); 
+        
+        const {
+            PUCLIC_TOUR_NAME,
+            PUCLIC_TOUR_TYPE,
+            DESCRIPIONS_HIGHLIGHT,
+            DESCRIPTIONS,
+            adultPrice,
+            childPrice,
+            address,
+            province,  // Mã tỉnh
+            district,  // Mã quận
+            ward,      // Mã xã/phường
+            CREATED_BY,
+            startDate,
+            endDate,
+            LANGUAGE,  // Thay vì language, dùng đúng từ khóa LANGUAGE
+            serviceDescription
+        } = req.body;
+
+        const IMAGE = req.file;
+
+        // Gọi API để lấy tên tỉnh, quận, xã/phường
+        const provinceName = await getLocationName(province, 'p');
+        const districtName = await getLocationName(district, 'd');
+        const wardName = await getLocationName(ward, 'w');
+
+        if (!provinceName || !districtName || !wardName) {
+            return res.status(500).json({ message: 'Không thể lấy thông tin địa phương từ API.' });
+        }
+
+        const parsedAdultPrice = parseFloat(adultPrice);
+        const parsedChildPrice = parseFloat(childPrice);
+
+        const pool = await connectToDB();
+        const insertTour = await pool.request()
+            .input('TOUR_NAME', sql.NVarChar, PUCLIC_TOUR_NAME)
+            .input('TOUR_TYPE_ID', sql.NVarChar, PUCLIC_TOUR_TYPE)
+            .input('HIGHLIGHTS', sql.NVarChar, DESCRIPIONS_HIGHLIGHT)
+            .input('DESCRIPTION', sql.NVarChar, DESCRIPTIONS)
+            .input('PRICE_ADULT', sql.Money, parsedAdultPrice)
+            .input('PRICE_CHILD', sql.Money, parsedChildPrice)
+            .input('ADDRESS', sql.NVarChar, address)
+            .input('PROVINCE', sql.NVarChar, provinceName)
+            .input('DISTRICT', sql.NVarChar, districtName)
+            .input('WARD', sql.NVarChar, wardName)
+            .input('CREATED_BY', sql.Int, CREATED_BY)
+            .input('START_DATE', sql.Date, startDate)
+            .input('END_DATE', sql.Date, endDate)
+            .input('LANGUAGE', sql.NVarChar, LANGUAGE) // Sử dụng biến đúng từ req.body
+            .input('SERVICE_DESCRIPTION', sql.NVarChar, serviceDescription)  
+            .query(`
+                INSERT INTO TOUR 
+                (TOUR_NAME, TOUR_TYPE_ID, HIGHLIGHTS, DESCRIPTION, PRICE_ADULT, PRICE_CHILD, ADDRESS, PROVINCE, DISTRICT, WARD, CREATED_BY, START_DATE, END_DATE, LANGUAGE, SERVICE_DESCRIPTION) 
+                OUTPUT INSERTED.TOUR_ID
+                VALUES (@TOUR_NAME, @TOUR_TYPE_ID, @HIGHLIGHTS, @DESCRIPTION, @PRICE_ADULT, @PRICE_CHILD, @ADDRESS, @PROVINCE, @DISTRICT, @WARD, @CREATED_BY, @START_DATE, @END_DATE, @LANGUAGE, @SERVICE_DESCRIPTION)
+            `);
+
+        const newTourId = insertTour.recordset[0].TOUR_ID;
+
+        // Lưu thông tin ảnh nếu có ảnh được tải lên
+        if (IMAGE) {
+            const imageUrl = `uploads/${IMAGE.filename}`;
+            await pool.request()
+                .input('TOUR_ID', sql.Int, newTourId)
+                .input('IMAGE_URL', sql.NVarChar, imageUrl)
+                .query(`INSERT INTO TOUR_IMAGES (TOUR_ID, IMAGE_URL) VALUES (@TOUR_ID, @IMAGE_URL)`);
+        }
+
+        res.status(201).json({ message: 'Tour đã được tạo thành công.' });
     } catch (error) {
-      console.error("Error creating tour:", error);
-      res.status(500).json({ message: 'Có lỗi xảy ra khi tạo tour.', error: error.message });
+        console.error("Error creating tour:", error);
+        res.status(500).json({ message: 'Có lỗi xảy ra khi tạo tour.', error: error.message });
     }
-  };
+};
+
+
+
   
-  
+
 
 
 
