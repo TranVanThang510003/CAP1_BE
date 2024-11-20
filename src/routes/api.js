@@ -6,7 +6,7 @@ const multer = require('multer');
 // Import các controller
 const { getUserById, updateUser } = require('../controllers/UserController');
 const { login, register } = require('../controllers/authController');
-const { getAllTours, getTourById, getToursByCreator , createTour } = require('../controllers/publicTourController');
+const { getAllTours, getTourById, getToursByCreator , createTour , updateTour } = require('../controllers/publicTourController');
 const { getAllAccount, getAccountById, updateAccountRole } = require('../controllers/adminController');
 const hotelController = require('../controllers/hotelController');
 const funActivityController = require('../controllers/funActivityController');
@@ -63,6 +63,25 @@ const upload = multer({ dest: 'uploads/' }); // Đường dẫn lưu ảnh tạm
 
 // Route tạo mới một tour chỉ cho phép nhân viên (staff) thực hiện
 router.post('/createtour', authenticateUser, verifyStaffRole, upload.single('IMAGE'), createTour);
+router.put(
+    '/public-tours/:id',
+    authenticateUser,
+    verifyStaffRole,
+    upload.single('IMAGE'),
+    async (req, res) => {
+      try {
+        const tourId = parseInt(req.params.id, 10);
+        if (isNaN(tourId)) {
+          return res.status(400).json({ message: 'Invalid tour ID' });
+        }
+        req.body.TOUR_ID = tourId; // Attach the ID to the request body
+        await updateTour(req, res);
+      } catch (error) {
+        res.status(500).json({ message: 'Error updating the tour', error: error.message });
+      }
+    }
+  );
+  
 // Route cho khách sạn
 router.get('/hotels', hotelController.getAllHotels);
 router.get('/hotels/:id', hotelController.getHotelById);
