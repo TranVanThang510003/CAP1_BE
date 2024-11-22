@@ -507,11 +507,21 @@ const updateTour = async (req, res) => {
       numDays,
       scheduleDetails,
       multiDaySchedules,
+      existingImages,
     } = req.body;
 
-    const IMAGE = req.file;
+    const uploadedFiles = req.files.newImages || [];
 
-    // Validate input
+    if (
+      !TOUR_ID ||
+      !PUCLIC_TOUR_NAME ||
+      !PUCLIC_TOUR_TYPE ||
+      !province ||
+      !district ||
+      !ward
+    ) {
+      return res.status(400).json({ message: 'Missing required fields.' });
+    }
     if (
       !TOUR_ID ||
       !PUCLIC_TOUR_NAME ||
@@ -571,7 +581,7 @@ const updateTour = async (req, res) => {
         DELETE FROM DAILY_SCHEDULES WHERE TOUR_ID = @TOUR_ID;
         DELETE FROM MULTI_DAY_SCHEDULES WHERE TOUR_ID = @TOUR_ID;
         DELETE FROM TOUR_SCHEDULE WHERE TOUR_ID = @TOUR_ID;
-        DELETE FROM TOUR_IMAGES WHERE TOUR_ID = @TOUR_ID;
+    
       `);
 
     // Chuyển đổi thời gian từ HH:mm sang HH:mm:ss
@@ -693,29 +703,34 @@ const updateTour = async (req, res) => {
             VALUES (@TOUR_ID, @DEPARTURE_DATE, @END_DATE, @PRICE_ADULT, @PRICE_CHILD, @AVAILABLE_ADULT_COUNT)
         `);
     }
+    // **Xóa tất cả ảnh cũ của tour đó**
+    await pool
+      .request()
+      .input('TOUR_ID', sql.Int, TOUR_ID)
+      .query(`DELETE FROM TOUR_IMAGES WHERE TOUR_ID = @TOUR_ID`);
 
-    // Cập nhật hoặc thêm hình ảnh
-    if (IMAGE) {
-      const imageUrl = `uploads/${IMAGE.filename}`;
-
-      await pool
-        .request()
-        .input('TOUR_ID', sql.Int, TOUR_ID)
-        .input('IMAGE_URL', sql.NVarChar, imageUrl).query(`
-            INSERT INTO TOUR_IMAGES (TOUR_ID, IMAGE_URL)
-            VALUES (@TOUR_ID, @IMAGE_URL)
-          `);
+    // **Thêm tất cả ảnh mới**
+    if (uploadedFiles.length > 0) {
+      for (const file of uploadedFiles) {
+        const imageUrl = `uploads/${file.filename}`; // Lưu URL của ảnh
+        await pool
+          .request()
+          .input('TOUR_ID', sql.Int, TOUR_ID)
+          .input('IMAGE_URL', sql.NVarChar, imageUrl).query(`
+       INSERT INTO TOUR_IMAGES (TOUR_ID, IMAGE_URL)
+       VALUES (@TOUR_ID, @IMAGE_URL);
+     `);
+      }
     }
 
-    res.status(200).json({ message: 'Tour updated successfully' });
+    res.status(200).json({ message: 'Tour updated successfully.' });
   } catch (error) {
     console.error('Error updating tour:', error);
     res
       .status(500)
-      .json({ message: 'Error updating tour', error: error.message });
+      .json({ message: 'Error updating tour.', error: error.message });
   }
 };
-
 module.exports = {
   getAllTours,
   getTourById,
