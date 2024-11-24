@@ -14,6 +14,7 @@ const {
   getToursByCreator,
   createTour,
   updateTour,
+  deleteTour,
 } = require('../controllers/publicTourController');
 const {
   getAllAccount,
@@ -88,7 +89,7 @@ router.post(
   '/createtour',
   authenticateUser,
   verifyStaffRole,
-  singleUpload,
+  multipleUpload,
   createTour
 );
 
@@ -112,6 +113,8 @@ router.put(
     }
   }
 );
+
+router.delete('/public-tours/:id', deleteTour);
 
 // ===== Route upload file (test) =====
 router.post('/upload-single', singleUpload, (req, res) => {

@@ -3,61 +3,75 @@ const { connectToDB } = require('../config/db');
 const axios = require('axios');
 // Hàm lấy danh sách các tour
 // src/controllers/publicTourController.js
+const path = require('path'); // Import module path
+const fs = require('fs'); // Import module file system
+
 const getAllTours = async (req, res) => {
   try {
     const pool = await connectToDB();
     const result = await pool.request().query(`
             SELECT 
-                T.TOUR_ID AS id,
-                T.TOUR_NAME AS name,
-                T.DESCRIPTION AS description,
-                S.NEAREST_PRICE_ADULT AS priceAdult, -- Lấy giá người lớn từ lịch gần nhất
-                T.CREATED_BY AS createBy,
-                S.DURATION AS duration, -- Thời lượng từ bảng TOUR_SCHEDULE
-                T.LAST_UPDATED AS lastUpdated,
-                I.IMAGE_URL AS imageUrl,
-                T.PROVINCE AS location,
-                ISNULL(ReviewData.reviewCount, 0) AS reviewCount,
-                ISNULL(ReviewData.averageRating, 0) AS averageRating,
-                ISNULL(BookingData.nub_booking, 0) AS nubBooking,
-                ISNULL(BookingData.totalAdultCount, 0) AS totalAdultCount,
-                TT.TOUR_TYPE_NAME AS tourType,
-                CASE 
-                    WHEN T.LANGUAGE = 'vi' THEN N'Tiếng Việt'
-                    WHEN T.LANGUAGE = 'en' THEN N'Tiếng Anh'
-                    ELSE N'Ngôn ngữ khác'
-                END AS language
-            FROM [TRIPGO1].[dbo].[TOUR] T
-            LEFT JOIN [TRIPGO1].[dbo].[TOUR_IMAGES] I ON T.TOUR_ID = I.TOUR_ID
-            LEFT JOIN [TRIPGO1].[dbo].[TOUR_TYPE] TT ON T.TOUR_TYPE_ID = TT.TOUR_TYPE_ID
-            OUTER APPLY (
-                SELECT 
-                    MIN(S.DEPARTURE_DATE) AS NEAREST_DEPARTURE_DATE,
-                    MIN(S.PRICE_ADULT) AS NEAREST_PRICE_ADULT, -- Lấy giá người lớn từ ngày khởi hành gần nhất
-                    MIN(DATEDIFF(DAY, S.DEPARTURE_DATE, S.END_DATE))+1 AS DURATION -- Tính thời lượng từ bảng TOUR_SCHEDULE
-                FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
-                WHERE S.TOUR_ID = T.TOUR_ID AND S.DEPARTURE_DATE >= GETDATE()
-            ) AS S
-            OUTER APPLY (
-                SELECT 
-                    COUNT(B.BOOKING_ID) AS nub_booking,
-                    SUM(B.ADULT_COUNT) AS totalAdultCount
-                FROM [TRIPGO1].[dbo].[TOUR_BOOKINGS] B
-                WHERE B.TOUR_ID = T.TOUR_ID
-            ) AS BookingData
-            OUTER APPLY (
-                SELECT 
-                    COUNT(RV.REVIEW_ID) AS reviewCount,
-                    AVG(RV.RATING) AS averageRating
-                FROM [TRIPGO1].[dbo].[TOUR_REVIEW] RV
-                WHERE RV.TOUR_ID = T.TOUR_ID
-            ) AS ReviewData
-            ORDER BY S.NEAREST_DEPARTURE_DATE;
+    T.TOUR_ID AS id,
+    T.TOUR_NAME AS name,
+    T.DESCRIPTION AS description,
+    S.NEAREST_PRICE_ADULT AS priceAdult, -- Giá người lớn từ lịch gần nhất
+    T.CREATED_BY AS createBy,
+    S.DURATION AS duration, -- Thời lượng tour
+    T.LAST_UPDATED AS lastUpdated,
+    I.IMAGE_URL AS imageUrl, -- Chỉ lấy một ảnh duy nhất
+    T.PROVINCE AS province,
+    T.DISTRICT AS district,
+    T.WARD AS ward,
+    ISNULL(ReviewData.reviewCount, 0) AS reviewCount,
+    ISNULL(ReviewData.averageRating, 0) AS averageRating,
+    ISNULL(BookingData.nub_booking, 0) AS nubBooking,
+    ISNULL(BookingData.totalAdultCount, 0) AS totalAdultCount,
+    TT.TOUR_TYPE_NAME AS tourType,
+    CASE 
+        WHEN T.LANGUAGE = 'vi' THEN N'Tiếng Việt'
+        WHEN T.LANGUAGE = 'en' THEN N'Tiếng Anh'
+        ELSE N'Ngôn ngữ khác'
+    END AS language
+FROM [TRIPGO1].[dbo].[TOUR] T
+OUTER APPLY (
+    SELECT TOP 1 IMAGE_URL -- Chỉ lấy 1 ảnh duy nhất
+    FROM [TRIPGO1].[dbo].[TOUR_IMAGES]
+    WHERE TOUR_ID = T.TOUR_ID
+    ORDER BY IMAGE_ID -- Sắp xếp theo thứ tự (có thể dùng thứ tự khác nếu cần)
+) I
+LEFT JOIN [TRIPGO1].[dbo].[TOUR_TYPE] TT ON T.TOUR_TYPE_ID = TT.TOUR_TYPE_ID
+OUTER APPLY (
+    SELECT 
+        MIN(S.DEPARTURE_DATE) AS NEAREST_DEPARTURE_DATE,
+        MIN(S.PRICE_ADULT) AS NEAREST_PRICE_ADULT,
+        MIN(DATEDIFF(DAY, S.DEPARTURE_DATE, S.END_DATE))+1 AS DURATION
+    FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
+    WHERE S.TOUR_ID = T.TOUR_ID AND S.DEPARTURE_DATE >= GETDATE()
+) AS S
+OUTER APPLY (
+    SELECT 
+        COUNT(B.BOOKING_ID) AS nub_booking,
+        SUM(B.ADULT_COUNT) AS totalAdultCount
+    FROM [TRIPGO1].[dbo].[TOUR_BOOKINGS] B
+    WHERE B.TOUR_ID = T.TOUR_ID
+) AS BookingData
+OUTER APPLY (
+    SELECT 
+        COUNT(RV.REVIEW_ID) AS reviewCount,
+        AVG(RV.RATING) AS averageRating
+    FROM [TRIPGO1].[dbo].[TOUR_REVIEW] RV
+    WHERE RV.TOUR_ID = T.TOUR_ID
+) AS ReviewData
+ORDER BY S.NEAREST_DEPARTURE_DATE;
+
         `);
 
     const tours = result.recordset.map((tour) => ({
       ...tour,
       imageUrl: tour.imageUrl ? `/${tour.imageUrl}` : null,
+      fullLocation: `${tour.ward || ''}, ${tour.district || ''}, ${
+        tour.province || ''
+      }`.trim(),
     }));
 
     res.status(200).json({ tours });
@@ -242,61 +256,60 @@ const getToursByCreator = async (creatorId) => {
     const pool = await connectToDB();
     const result = await pool.request().input('creatorId', sql.Int, creatorId)
       .query(`
-                SELECT 
-                    T.TOUR_ID AS id,
-                    T.TOUR_NAME AS name,
-                    T.DESCRIPTION AS description,
-                    ISNULL(S.NEAREST_PRICE_ADULT, 0) AS priceAdult, -- Giá người lớn từ lịch trình gần nhất
-                    S.DURATION AS duration, 
-                    T.LAST_UPDATED AS lastUpdated,
-                    I.IMAGE_URL AS imageUrl,
-                    T.PROVINCE AS location,
-                    TT.TOUR_TYPE_NAME AS tourType,
-                    CASE 
-                        WHEN T.LANGUAGE = 'vi' THEN N'Tiếng Việt'
-                        WHEN T.LANGUAGE = 'en' THEN N'Tiếng Anh'
-                        ELSE N'Ngôn ngữ khác'
-                    END AS language,
-                    ISNULL(ReviewData.reviewCount, 0) AS reviewCount,
-                    ISNULL(ReviewData.averageRating, 0) AS averageRating,
-                    ISNULL(BookingData.totalBookings, 0) AS totalBookings -- Tổng lượt đặt
-                FROM [TRIPGO1].[dbo].[TOUR] T
-                LEFT JOIN [TRIPGO1].[dbo].[TOUR_IMAGES] I ON T.TOUR_ID = I.TOUR_ID
-                LEFT JOIN [TRIPGO1].[dbo].[TOUR_TYPE] TT ON T.TOUR_TYPE_ID = TT.TOUR_TYPE_ID
-                OUTER APPLY (
-                    SELECT 
-                        MIN(S.DEPARTURE_DATE) AS NEAREST_DEPARTURE_DATE,
-                        MAX(S.END_DATE) AS END_DATE,
-                        MIN(S.PRICE_ADULT) AS NEAREST_PRICE_ADULT, -- Lấy giá người lớn nhỏ nhất từ lịch trình gần nhất
-                        CASE 
-                            WHEN MAX(S.END_DATE) IS NOT NULL THEN DATEDIFF(DAY, MIN(S.DEPARTURE_DATE), MAX(S.END_DATE)) + 1
-                            
-                        END AS DURATION
-                    FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
-                    WHERE S.TOUR_ID = T.TOUR_ID AND S.DEPARTURE_DATE >= GETDATE()
-                ) AS S
-                OUTER APPLY (
-                    SELECT 
-                        COUNT(R.REVIEW_ID) AS reviewCount,
-                        AVG(R.RATING) AS averageRating
-                    FROM [TRIPGO1].[dbo].[TOUR_REVIEW] R
-                    WHERE R.TOUR_ID = T.TOUR_ID
-                ) AS ReviewData
-                OUTER APPLY (
-                    SELECT 
-                        COUNT(B.BOOKING_ID) AS totalBookings
-                    FROM [TRIPGO1].[dbo].[TOUR_BOOKINGS] B
-                    WHERE B.TOUR_ID = T.TOUR_ID
-                ) AS BookingData
-                WHERE T.CREATED_BY = @creatorId
-                ORDER BY 
-                    CASE 
-                        WHEN GETDATE() < S.NEAREST_DEPARTURE_DATE THEN 1
-                        WHEN GETDATE() BETWEEN S.NEAREST_DEPARTURE_DATE AND S.END_DATE THEN 2
-                        WHEN GETDATE() > S.END_DATE THEN 3
-                    END,
-                    S.NEAREST_DEPARTURE_DATE;
-            `);
+        SELECT 
+            T.TOUR_ID AS id,
+            T.TOUR_NAME AS name,
+            T.DESCRIPTION AS description,
+            ISNULL(S.NEAREST_PRICE_ADULT, 0) AS priceAdult,
+            S.DURATION AS duration, 
+            T.LAST_UPDATED AS lastUpdated,
+            I.IMAGE_URL AS imageUrl,
+            T.PROVINCE AS location,
+            TT.TOUR_TYPE_NAME AS tourType,
+            CASE 
+                WHEN T.LANGUAGE = 'vi' THEN N'Tiếng Việt'
+                WHEN T.LANGUAGE = 'en' THEN N'Tiếng Anh'
+                ELSE N'Ngôn ngữ khác'
+            END AS language,
+            ISNULL(ReviewData.reviewCount, 0) AS reviewCount,
+            ISNULL(ReviewData.averageRating, 0) AS averageRating,
+            ISNULL(BookingData.totalBookings, 0) AS totalBookings,
+            S.NEAREST_DEPARTURE_DATE -- Thêm cột này vào SELECT
+        FROM [TRIPGO1].[dbo].[TOUR] T
+        LEFT JOIN (
+          SELECT TOUR_ID, MIN(IMAGE_URL) AS IMAGE_URL
+          FROM [TRIPGO1].[dbo].[TOUR_IMAGES]
+          GROUP BY TOUR_ID
+        ) I ON T.TOUR_ID = I.TOUR_ID
+        LEFT JOIN [TRIPGO1].[dbo].[TOUR_TYPE] TT ON T.TOUR_TYPE_ID = TT.TOUR_TYPE_ID
+        OUTER APPLY (
+          SELECT 
+              MIN(S.DEPARTURE_DATE) AS NEAREST_DEPARTURE_DATE,
+              MAX(S.END_DATE) AS END_DATE,
+              MIN(S.PRICE_ADULT) AS NEAREST_PRICE_ADULT,
+              CASE 
+                  WHEN MAX(S.END_DATE) IS NOT NULL THEN DATEDIFF(DAY, MIN(S.DEPARTURE_DATE), MAX(S.END_DATE)) + 1
+              END AS DURATION
+          FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
+          WHERE S.TOUR_ID = T.TOUR_ID AND S.DEPARTURE_DATE >= GETDATE()
+        ) AS S
+        OUTER APPLY (
+          SELECT 
+              COUNT(R.REVIEW_ID) AS reviewCount,
+              AVG(R.RATING) AS averageRating
+          FROM [TRIPGO1].[dbo].[TOUR_REVIEW] R
+          WHERE R.TOUR_ID = T.TOUR_ID
+        ) AS ReviewData
+        OUTER APPLY (
+          SELECT 
+              COUNT(B.BOOKING_ID) AS totalBookings
+          FROM [TRIPGO1].[dbo].[TOUR_BOOKINGS] B
+          WHERE B.TOUR_ID = T.TOUR_ID
+        ) AS BookingData
+        WHERE T.CREATED_BY = @creatorId
+    
+          ORDER BY T.LAST_UPDATED DESC; -- Sắp xếp theo ngày tạo giảm dần
+      `);
 
     return result.recordset.map((tour) => ({
       ...tour,
@@ -344,8 +357,10 @@ const createTour = async (req, res) => {
       multiDaySchedules,
     } = req.body;
 
-    const IMAGE = req.file;
+    // Lấy danh sách file mới upload
 
+    const uploadedFiles = req.files?.newImages || []; // Dùng khi `multipleUpload`
+    console.log('Uploaded files:', uploadedFiles);
     // Chuyển mã địa điểm sang tên địa điểm
     const provinceName = await getLocationName(province, 'p');
     const districtName = await getLocationName(district, 'd');
@@ -465,15 +480,18 @@ const createTour = async (req, res) => {
     }
 
     // Lưu hình ảnh vào TOUR_IMAGES
-    if (IMAGE) {
-      const imageUrl = `uploads/${IMAGE.filename}`;
-      await pool
-        .request()
-        .input('TOUR_ID', sql.Int, newTourId)
-        .input('IMAGE_URL', sql.NVarChar, imageUrl).query(`
+
+    if (uploadedFiles.length > 0) {
+      for (const file of uploadedFiles) {
+        const imageUrl = `uploads/${file.filename}`;
+        await pool
+          .request()
+          .input('TOUR_ID', sql.Int, newTourId)
+          .input('IMAGE_URL', sql.NVarChar, imageUrl).query(`
                     INSERT INTO TOUR_IMAGES (TOUR_ID, IMAGE_URL)
                     VALUES (@TOUR_ID, @IMAGE_URL)
                 `);
+      }
     }
 
     res
@@ -507,10 +525,15 @@ const updateTour = async (req, res) => {
       numDays,
       scheduleDetails,
       multiDaySchedules,
-      existingImages,
     } = req.body;
 
-    const uploadedFiles = req.files.newImages || [];
+    // Lấy danh sách file mới upload
+    const uploadedFiles = req.files.newImages || []; // Nhận từ 'newImages'
+    console.log('Uploaded files:', uploadedFiles);
+
+    // Lấy danh sách ảnh cũ từ body
+    const existingImages = JSON.parse(req.body.existingImages || '[]');
+    console.log('Existing images:', existingImages);
 
     if (
       !TOUR_ID ||
@@ -703,23 +726,53 @@ const updateTour = async (req, res) => {
             VALUES (@TOUR_ID, @DEPARTURE_DATE, @END_DATE, @PRICE_ADULT, @PRICE_CHILD, @AVAILABLE_ADULT_COUNT)
         `);
     }
-    // **Xóa tất cả ảnh cũ của tour đó**
-    await pool
+    // Xóa ảnh cũ không còn trong danh sách existingImages
+    const dbImagesResult = await pool
       .request()
       .input('TOUR_ID', sql.Int, TOUR_ID)
-      .query(`DELETE FROM TOUR_IMAGES WHERE TOUR_ID = @TOUR_ID`);
+      .query('SELECT IMAGE_URL FROM TOUR_IMAGES WHERE TOUR_ID = @TOUR_ID');
 
-    // **Thêm tất cả ảnh mới**
+    const dbImages = dbImagesResult.recordset.map((row) => row.IMAGE_URL);
+    const imagesToDelete = dbImages.filter(
+      (dbImage) => !existingImages.includes(dbImage)
+    );
+    console.log('Images to delete:', imagesToDelete);
+    // Xóa ảnh cũ không còn trong `existingImages`
+    for (const image of imagesToDelete) {
+      const filePath = path.join(__dirname, '..', image); // Đường dẫn đầy đủ tới file
+      console.log('Deleting file at:', filePath); // Log đường dẫn file
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath); // Xóa file
+      }
+    }
+
+    if (imagesToDelete.length > 0) {
+      const deleteQuery = `
+        DELETE FROM TOUR_IMAGES 
+        WHERE TOUR_ID = @TOUR_ID 
+        AND IMAGE_URL IN (${imagesToDelete.map((url) => `'${url}'`).join(', ')})
+      `;
+      await pool
+        .request()
+        .input('TOUR_ID', sql.Int, TOUR_ID)
+        .query(deleteQuery);
+    }
+
+    // Thêm ảnh mới vào DB
+    console.log('Request files:', req.files); // Log toàn bộ files
+    console.log('newImages:', req.files.newImages || []); // Log dữ liệu mảng newImages
+
     if (uploadedFiles.length > 0) {
+      // Lưu file mới vào DB
       for (const file of uploadedFiles) {
-        const imageUrl = `uploads/${file.filename}`; // Lưu URL của ảnh
+        const imageUrl = `uploads/${file.filename}`;
         await pool
           .request()
-          .input('TOUR_ID', sql.Int, TOUR_ID)
+          .input('TOUR_ID', sql.Int, req.body.TOUR_ID)
           .input('IMAGE_URL', sql.NVarChar, imageUrl).query(`
-       INSERT INTO TOUR_IMAGES (TOUR_ID, IMAGE_URL)
-       VALUES (@TOUR_ID, @IMAGE_URL);
-     `);
+          INSERT INTO TOUR_IMAGES (TOUR_ID, IMAGE_URL)
+          VALUES (@TOUR_ID, @IMAGE_URL)
+        `);
       }
     }
 
@@ -731,10 +784,57 @@ const updateTour = async (req, res) => {
       .json({ message: 'Error updating tour.', error: error.message });
   }
 };
+
+const deleteTour = async (req, res) => {
+  console.log('Delete request received for TOUR_ID:', req.params.id);
+
+  const { id } = req.params;
+
+  try {
+    const pool = await connectToDB();
+
+    // Kiểm tra tour có tồn tại
+    const tour = await pool
+      .request()
+      .input('TOUR_ID', sql.Int, id)
+      .query('SELECT * FROM TOUR WHERE TOUR_ID = @TOUR_ID');
+    console.log('Tour found:', tour.recordset);
+
+    if (!tour.recordset.length) {
+      return res.status(404).json({ message: 'Tour không tồn tại.' });
+    }
+
+    // Xóa dữ liệu liên quan
+    console.log('Deleting related data...');
+    await pool.request().input('TOUR_ID', sql.Int, id).query(`
+      DELETE FROM DAILY_SCHEDULES WHERE TOUR_ID = @TOUR_ID;
+      DELETE FROM MULTI_DAY_SCHEDULES WHERE TOUR_ID = @TOUR_ID;
+      DELETE FROM TOUR_SCHEDULE WHERE TOUR_ID = @TOUR_ID;
+      DELETE FROM TOUR_IMAGES WHERE TOUR_ID = @TOUR_ID;
+    `);
+
+    // Xóa tour chính
+    console.log('Deleting main tour...');
+    await pool
+      .request()
+      .input('TOUR_ID', sql.Int, id)
+      .query('DELETE FROM TOUR WHERE TOUR_ID = @TOUR_ID');
+
+    return res.status(200).json({ message: 'Xóa tour thành công.' });
+  } catch (error) {
+    console.error('Error deleting tour:', error);
+    return res.status(500).json({
+      message: 'Có lỗi xảy ra khi xóa tour.',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllTours,
   getTourById,
   getToursByCreator,
   createTour,
   updateTour,
+  deleteTour,
 };

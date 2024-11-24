@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 
+// Định nghĩa nơi lưu trữ file
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/'); // Đường dẫn lưu ảnh
@@ -11,6 +12,7 @@ const storage = multer.diskStorage({
   },
 });
 
+// Bộ lọc định dạng file
 const fileFilter = (req, file, cb) => {
   const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
   if (allowedMimeTypes.includes(file.mimetype)) {
@@ -20,6 +22,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// Cấu hình Multer
 const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn kích thước file: 5MB
@@ -29,6 +32,7 @@ const upload = multer({
 module.exports = {
   singleUpload: upload.single('IMAGE'),
   multipleUpload: upload.fields([
-    { name: 'newImages', maxCount: 10 }, // Cho phép tối đa 10 ảnh mới
+    { name: 'newImages', maxCount: 10 }, // Đổi từ 'newImages[]' thành 'newImages'
+    { name: 'existingImages', maxCount: 10 }, // Đổi từ 'existingImages[]' thành 'existingImages'
   ]),
 };
