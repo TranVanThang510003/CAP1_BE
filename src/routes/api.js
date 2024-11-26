@@ -8,14 +8,13 @@ const {
 // Import các controller
 const { getUserById, updateUser } = require('../controllers/UserController');
 const { login, register } = require('../controllers/authController');
-const {
-  getAllTours,
-  getTourById,
-  getToursByCreator,
-  createTour,
-  updateTour,
-  deleteTour,
-} = require('../controllers/publicTourController');
+const getAllTours = require('../controllers/publicTourController/getAllTours');
+const getTourById = require('../controllers/publicTourController/getTourById');
+const getToursByCreator = require('../controllers/publicTourController/getTourByCreator');
+const createTour = require('../controllers/publicTourController/createTour');
+const updateTour = require('../controllers/publicTourController/updateTour');
+const deleteTour = require('../controllers/publicTourController/deleteTour');
+
 const {
   getAllAccount,
   getAccountById,
