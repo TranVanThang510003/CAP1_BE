@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tour Map with Search</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 70vh;
+      width: 100%;
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+      gap: 10px;
+    }
+
+    input, button, select {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px;
+      width: 30%;
+    }
+
+    #tourList {
+      margin: 10px 0;
+      padding: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <input id="searchTour" type="text" placeholder="Tìm kiếm tour">
+    <select id="provinceFilter">
+      <option value="">Tất cả tỉnh</option>
+      <option value="Quảng Ninh">Quảng Ninh</option>
+      <option value="Quảng Nam">Quảng Nam</option>
+      <option value="Lào Cai">Lào Cai</option>
+      <option value="Lâm Đồng">Lâm Đồng</option>
+    </select>
+    <button id="searchButton">Tìm kiếm</button>
+  </div>
+  <div id="map"></div>
+  <div id="tourList">
+    <h4>Danh sách các tour du lịch:</h4>
+    <ul id="tourItems"></ul>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+  <script>
+    // Khởi tạo bản đồ
+    const map = L.map('map').setView([21.028511, 105.804817], 6);
+
+    // Thêm lớp gạch từ OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    let markers = []; // Lưu trữ danh sách các marker
+
+    // Danh sách các tour du lịch (không có tọa độ ban đầu)
+    const tourLocations = [
+      {
+        name: "Hạ Long Bay",
+        description: "Tour khám phá vịnh Hạ Long 3 ngày 2 đêm.",
+        province: "Quảng Ninh"
+      },
+      {
+        name: "Hội An Ancient Town",
+        description: "Tour tham quan phố cổ Hội An trong 1 ngày.",
+        province: "Quảng Nam"
+      },
+      {
+        name: "Sapa",
+        description: "Tour nghỉ dưỡng Sapa 2 ngày 1 đêm.",
+        province: "Lào Cai"
+      },
+      {
+        name: "Đà Lạt",
+        description: "Tour khám phá Đà Lạt 3 ngày 2 đêm.",
+        province: "Lâm Đồng"
+      }
+    ];
+
+    // Cấu hình Fuse.js để tìm kiếm gần đúng
+    const fuse = new Fuse(tourLocations, {
+      keys: ["name", "description", "province"],
+      threshold: 0.3
+    });
+
+    // Hàm lấy tọa độ từ tên tỉnh bằng Nominatim API
+    async function getCoordinates(province) {
+      const geocodingUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(province)}&format=json&addressdetails=1&limit=1`;
+
+      try {
+        const response = await fetch(geocodingUrl);
+        const data = await response.json();
+        if (data.length > 0) {
+          const { lat, lon } = data[0];
+          return { lat: parseFloat(lat), lng: parseFloat(lon) };
+        } else {
+          throw new Error(`Không tìm thấy tọa độ cho tỉnh: ${province}`);
+        }
+      } catch (error) {
+        console.error(`Lỗi khi tìm kiếm tọa độ: ${error.message}`);
+        return null;
+      }
+    }
+
+    // Hiển thị danh sách tour trên giao diện
+    function displayTourList(locations) {
+      const tourList = document.getElementById('tourItems');
+      tourList.innerHTML = "";
+
+      locations.forEach(location => {
+        const li = document.createElement('li');
+        li.textContent = `${location.name} (${location.province}) - ${location.description}`;
+        li.addEventListener('click', () => {
+          map.setView([location.lat, location.lng], 13);
+          L.popup()
+            .setLatLng([location.lat, location.lng])
+            .setContent(`<b>${location.name}</b><br>${location.description}`)
+            .openOn(map);
+        });
+        tourList.appendChild(li);
+      });
+    }
+
+    // Hiển thị các điểm trên bản đồ
+    function displayLocationsOnMap(locations) {
+      markers.forEach(marker => map.removeLayer(marker));
+      markers = [];
+
+      locations.forEach(location => {
+        const marker = L.marker([location.lat, location.lng])
+          .addTo(map)
+          .bindPopup(`<b>${location.name}</b><br>${location.description}<br><i>${location.province}</i>`);
+        markers.push(marker);
+      });
+
+      if (locations.length > 0) {
+        const bounds = L.latLngBounds(locations.map(loc => [loc.lat, loc.lng]));
+        map.fitBounds(bounds);
+      } else {
+        map.setView([21.028511, 105.804817], 6);
+      }
+    }
+
+    // Cập nhật dữ liệu tour với tọa độ từ API
+    async function loadToursWithCoordinates() {
+      const updatedTourLocations = [];
+
+      for (const location of tourLocations) {
+        const coordinates = await getCoordinates(location.province);
+        if (coordinates) {
+          updatedTourLocations.push({ ...location, ...coordinates });
+        }
+      }
+
+      // Hiển thị danh sách và bản đồ
+      displayTourList(updatedTourLocations);
+      displayLocationsOnMap(updatedTourLocations);
+
+      return updatedTourLocations;
+    }
+
+    // Xử lý sự kiện tìm kiếm
+    document.getElementById('searchButton').addEventListener('click', async () => {
+      const query = document.getElementById('searchTour').value.toLowerCase();
+      const province = document.getElementById('provinceFilter').value;
+
+      const updatedTourLocations = await loadToursWithCoordinates();
+
+      let filteredLocations = updatedTourLocations;
+
+      // Lọc theo tỉnh
+      if (province) {
+        filteredLocations = filteredLocations.filter(location => location.province === province);
+      }
+
+      // Tìm kiếm gần đúng
+      if (query) {
+        const fuzzyResults = fuse.search(query).map(result => result.item);
+        filteredLocations = filteredLocations.filter(location =>
+          fuzzyResults.some(fuzzyLoc => fuzzyLoc.name === location.name)
+        );
+      }
+
+      // Cập nhật giao diện
+      displayTourList(filteredLocations);
+      displayLocationsOnMap(filteredLocations);
+
+      if (filteredLocations.length === 0) {
+        alert('Không tìm thấy tour nào phù hợp.');
+      }
+    });
+
+    // Tự động tải dữ liệu khi mở trang
+    loadToursWithCoordinates();
+  </script>
+</body>
+</html>
