@@ -59,18 +59,23 @@ const getTourById = async (req, res) => {
                     TI.IMAGE_URL AS imageUrl
                 FROM [TRIPGO1].[dbo].[TOUR_IMAGES] TI
                 WHERE TI.TOUR_ID = @tourId;
-
-                -- Lấy danh sách lịch trình
-                SELECT 
-                    S.SCHEDULE_ID AS scheduleId,
-                    S.DEPARTURE_DATE AS departureDate,
-                    ISNULL(S.END_DATE, S.DEPARTURE_DATE) AS endDate,
-                    S.PRICE_ADULT AS priceAdult,
-                    S.PRICE_CHILD AS priceChild,
-                    S.AVAILABLE_ADULT_COUNT AS availableAdults
-                FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
-                WHERE S.TOUR_ID = @tourId
-                ORDER BY S.DEPARTURE_DATE ASC;
+-- Lấy danh sách lịch trình và số lượng booking
+    SELECT 
+        S.SCHEDULE_ID AS scheduleId,
+        S.DEPARTURE_DATE AS departureDate,
+        ISNULL(S.END_DATE, S.DEPARTURE_DATE) AS endDate,
+        S.PRICE_ADULT AS priceAdult,
+        S.PRICE_CHILD AS priceChild,
+        S.AVAILABLE_ADULT_COUNT AS availableAdults,
+        -- Tính tổng số lượng booking (người lớn và trẻ em)
+        ISNULL(SUM(TB.ADULT_COUNT), 0) AS bookedAdults,
+        ISNULL(SUM(TB.CHILD_COUNT), 0) AS bookedChildren,
+        ISNULL(SUM(TB.ADULT_COUNT) + SUM(TB.CHILD_COUNT), 0) AS totalBooked
+    FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
+    LEFT JOIN [TRIPGO1].[dbo].[TOUR_BOOKINGS] TB ON TB.TOUR_ID = S.TOUR_ID AND TB.DATE = S.DEPARTURE_DATE
+    WHERE S.TOUR_ID = @tourId
+    GROUP BY S.SCHEDULE_ID, S.DEPARTURE_DATE, S.END_DATE, S.PRICE_ADULT, S.PRICE_CHILD, S.AVAILABLE_ADULT_COUNT
+    ORDER BY S.DEPARTURE_DATE ASC;
             `);
 
         // Kiểm tra nếu không có dữ liệu tour
@@ -94,6 +99,7 @@ const getTourById = async (req, res) => {
             priceAdult: schedule.priceAdult,
             priceChild: schedule.priceChild,
             availableAdultCount: schedule.availableAdults,
+            totalBooked:schedule.totalBooked
         }));
 
         // Kiểm tra service_type và lấy dữ liệu tương ứng

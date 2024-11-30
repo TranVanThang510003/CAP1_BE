@@ -9,15 +9,16 @@ const hotelRoutes = require('./hotelRoutes');
 const funActivityRoutes = require('./funActivityRoutes');
 const paymentRoutes = require('./paymentRoutes');
 const invoiceRoutes = require('./staffRoutes');
-
+const dashboardRoutes = require('./dashboardRoutes');
 // Mount routes
 router.use('/users', userRoutes);
-router.use('/auth', authRoutes);
+router.use('/', authRoutes);
+router.use('/', dashboardRoutes) ;
 router.use('/public-tours', tourRoutes);
 router.use('/accounts', adminRoutes);
 router.use('/hotels', hotelRoutes);
 router.use('/activities', funActivityRoutes);
-router.use('/payments', paymentRoutes);
+router.use('/', paymentRoutes);
 router.use('/invoices', invoiceRoutes);
 
 module.exports = router;
