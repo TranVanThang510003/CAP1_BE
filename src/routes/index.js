@@ -20,6 +20,5 @@ router.use('/hotels', hotelRoutes);
 router.use('/activities', funActivityRoutes);
 router.use('/', paymentRoutes);
 router.use('/invoices', invoiceRoutes);
-router.use('/',marketingRoutes);
 
 module.exports = router;
