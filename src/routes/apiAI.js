@@ -13,6 +13,7 @@ function appendHotelDataToCSV(locationId, pageNumber) {
       currencyCode: 'USD', // Sử dụng đồng tiền USD
       checkIn: '2024-12-01', // Ngày check-in giả định
       checkOut: '2024-12-05' // Ngày check-out giả định
+      
     },
     headers: {
       'x-rapidapi-key': '761b67e2e5mshe502d72ad98d2a6p136e22jsnd8e3d3e83334',
