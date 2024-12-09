@@ -154,10 +154,10 @@ const createTour = async (req, res) => {
                 .input('END_DATE', sql.Date, endDate.toISOString().split('T')[0])
                 .input('PRICE_ADULT', sql.Money, schedule.priceAdult)
                 .input('PRICE_CHILD', sql.Money, schedule.priceChild)
-                .input('AVAILABLE_ADULT_COUNT', sql.Int, schedule.availableAdultCount)
+                .input('QUANTITY', sql.Int, schedule.quantity)
                 .query(`
-                    INSERT INTO TOUR_SCHEDULE (TOUR_ID, DEPARTURE_DATE, END_DATE, PRICE_ADULT, PRICE_CHILD, AVAILABLE_ADULT_COUNT)
-                    VALUES (@TOUR_ID, @DEPARTURE_DATE, @END_DATE, @PRICE_ADULT, @PRICE_CHILD, @AVAILABLE_ADULT_COUNT)
+                    INSERT INTO TOUR_SCHEDULE (TOUR_ID, DEPARTURE_DATE, END_DATE, PRICE_ADULT, PRICE_CHILD,QUANTITY)
+                    VALUES (@TOUR_ID, @DEPARTURE_DATE, @END_DATE, @PRICE_ADULT, @PRICE_CHILD, @QUANTITY)
                 `);
         }
 

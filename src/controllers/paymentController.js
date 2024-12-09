@@ -44,10 +44,11 @@ function initPaymentRoutes(app) {
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
       amount: parseInt(total_price),
-      callback_url: 'https://7081-103-156-46-86.ngrok-free.app/callback',
+      callback_url: 'https://3c0a-42-116-28-99.ngrok-free.app/callback',
       description: `Payment for tour #${tour_id}`,
       bank_code: '',
     };
+    console.log("Dữ liệu order:", order);
 
     const data = `${config.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
     order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();

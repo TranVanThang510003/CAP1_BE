@@ -66,7 +66,7 @@ const getTourById = async (req, res) => {
         ISNULL(S.END_DATE, S.DEPARTURE_DATE) AS endDate,
         S.PRICE_ADULT AS priceAdult,
         S.PRICE_CHILD AS priceChild,
-        S.AVAILABLE_ADULT_COUNT AS availableAdults,
+        S.QUANTITY AS quantity,
         -- Tính tổng số lượng booking (người lớn và trẻ em)
         ISNULL(SUM(TB.ADULT_COUNT), 0) AS bookedAdults,
         ISNULL(SUM(TB.CHILD_COUNT), 0) AS bookedChildren,
@@ -74,7 +74,7 @@ const getTourById = async (req, res) => {
     FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
     LEFT JOIN [TRIPGO1].[dbo].[TOUR_BOOKINGS] TB ON TB.TOUR_ID = S.TOUR_ID AND TB.DATE = S.DEPARTURE_DATE
     WHERE S.TOUR_ID = @tourId
-    GROUP BY S.SCHEDULE_ID, S.DEPARTURE_DATE, S.END_DATE, S.PRICE_ADULT, S.PRICE_CHILD, S.AVAILABLE_ADULT_COUNT
+    GROUP BY S.SCHEDULE_ID, S.DEPARTURE_DATE, S.END_DATE, S.PRICE_ADULT, S.PRICE_CHILD, S.QUANTITY
     ORDER BY S.DEPARTURE_DATE ASC;
             `);
 
@@ -98,7 +98,7 @@ const getTourById = async (req, res) => {
             endDate: schedule.endDate,
             priceAdult: schedule.priceAdult,
             priceChild: schedule.priceChild,
-            availableAdultCount: schedule.availableAdults,
+            quantity: schedule.quantity,
             totalBooked:schedule.totalBooked
         }));
 

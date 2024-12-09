@@ -81,7 +81,7 @@ ORDER BY S.NEAREST_DEPARTURE_DATE;
         ISNULL(S.END_DATE, S.DEPARTURE_DATE) AS endDate,
         S.PRICE_ADULT AS priceAdult,
         S.PRICE_CHILD AS priceChild,
-        S.AVAILABLE_ADULT_COUNT AS availableAdults
+        S.QUANTITY AS quantity
       FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
       ORDER BY S.DEPARTURE_DATE ASC;
     `);

@@ -65,7 +65,7 @@ const login = async (req, res) => {
             // Thêm các trường khác nếu cần thiết
         };
 
-        res.json({ success: true, user: userInfo });
+        res.json({ success: true,message: 'Đăng nhập thành công!' , user: userInfo });
     } catch (err) {
         console.error('Lỗi đăng nhập:', err);
         res.status(500).json({ success: false, message: 'Lỗi máy chủ.' });

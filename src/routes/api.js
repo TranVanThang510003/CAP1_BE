@@ -6,7 +6,7 @@ const {
 } = require('../middlewares/uploadMiddlewares');
 
 // Import các controller
-const { getUserById, updateUser } = require('../controllers/UserController');
+const { getUserById, updateUser } = require('../controllers/userController/UserController');
 const { login, register } = require('../controllers/authController');
 const getAllTours = require('../controllers/publicTourController/getAllTours');
 const getTourById = require('../controllers/publicTourController/getTourById');
@@ -85,7 +85,7 @@ router.get('/public-tours/by-creator/:creatorId', async (req, res) => {
 
 // ===== Routes tạo và cập nhật tour =====
 router.post(
-  '/createtour',
+  '/createTour',
   authenticateUser,
   verifyStaffRole,
   multipleUpload,

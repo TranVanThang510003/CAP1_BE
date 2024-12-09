@@ -6,33 +6,48 @@ const getTotalRevenueInYear = async (req, res) => {
     try {
         const year = req.params.year;
         const pool = await connectToDB();
-        const result = await pool.request().input("year", sql.Int, year).query(`
-            SELECT SUM([TOTAL_PRICE]) AS Total_Revenue, 
-                    COUNT(*) AS Total_Tours, 
-                    COUNT(DISTINCT [USER_ID]) AS Total_Unique_Users
-            FROM [dbo].[TOUR_BOOKINGS]
-            WHERE [STATUS] = 'success' and YEAR([DATE]) = @year
-            `);
-        //Tính số tài khoản đăng ký thành công trong năm
-        const count = await pool.request().input("year", sql.Int, year).query(`SELECT COUNT(DISTINCT [USER_ID]) AS Total_Users FROM USERS WHERE YEAR([JOIN_DATE]) = @year;`);
-        const report2 = count.recordset[0];
-        const report = result.recordset[0];
+
+        // Thực hiện các truy vấn đồng thời
+        const [revenueResult, countResult, tourResult] = await Promise.all([
+            pool.request().input("year", sql.Int, year).query(`
+                SELECT SUM([TOTAL_PRICE]) AS Total_Revenue, 
+                       COUNT(DISTINCT [USER_ID]) AS Total_Unique_Users
+                FROM [dbo].[TOUR_BOOKINGS]
+                WHERE [STATUS] = 'success' AND YEAR([DATE]) = @year
+            `),
+            pool.request().input("year", sql.Int, year).query(`
+                SELECT COUNT(DISTINCT [USER_ID]) AS Total_Users
+                FROM USERS
+                WHERE YEAR([JOIN_DATE]) = @year
+            `),
+            pool.query(`
+                SELECT COUNT(DISTINCT [TOUR_ID]) AS Total_Tours
+                FROM TOUR
+            `)
+        ]);
+
+        // Lấy dữ liệu từ các truy vấn
+        const revenue = revenueResult.recordset[0];
+        const count = countResult.recordset[0];
+        const tour = tourResult.recordset[0];
+
+        // Trả về kết quả
         return res.json({
-            Total_Revenue: report.Total_Revenue,
-            Total_Tours: report.Total_Tours,
-            Total_Unique_Users: report.Total_Unique_Users,
-            Total_Users: report2.Total_Users
+            Total_Revenue: revenue.Total_Revenue,
+            Total_Tours: tour.Total_Tours,
+            Total_Unique_Users: revenue.Total_Unique_Users,
+            Total_Users: count.Total_Users
         });
     } catch (error) {
-        console.error("Error fetching users:", error.message);
-        res
-            .status(500)
-            .json({
-                message: "Lỗi khi lấy danh sách người dùng",
-                error: error.message,
-            });
+        console.error("Error fetching data:", error.message);
+        return res.status(500).json({
+            message: "Lỗi khi lấy dữ liệu",
+            error: error.message,
+        });
     }
 };
+
+
 
 //Get Number of Tuors in Year
 const getTotalTourAndHotelInYear = async (req, res) => {
