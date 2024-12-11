@@ -26,7 +26,7 @@ const initPaymentRoutes = require('../controllers/paymentController');
 const {
   getAllInvoices,
   getBookingsByStaff,
-} = require('../controllers/staffcontroller');
+} = require('../controllers/staffController/staffcontroller');
 const {
   verifyStaffRole,
   authenticateUser,

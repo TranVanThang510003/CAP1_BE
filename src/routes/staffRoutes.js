@@ -1,6 +1,23 @@
 const express = require('express');
-const { getBookingsByStaff } = require('../controllers/staffcontroller');
+const { getBookingsByStaff } = require('../controllers/staffController/staffcontroller');
+const getOrdersByTour= require('../controllers/staffController/getOrderByTour');
 const router = express.Router();
+router.get('/order/:creatorId', async (req, res) => {
+const creatorId = parseInt(req.params.creatorId, 10);
+if (isNaN(creatorId) || creatorId <= 0) {
+    return res.status(400).json({ message: 'creatorId không hợp lệ' });
+}
+
+try {
+    const orders = await getOrdersByTour(creatorId);
+    res.status(200).json({ orders });
+} catch (error) {
+    res
+        .status(500)
+        .json({ message: 'Lỗi khi lấy danh sách hóa đơn', error: error.message });
+}
+});
+
 
 router.get('/:creatorId', async (req, res) => {
     const creatorId = parseInt(req.params.creatorId, 10);
