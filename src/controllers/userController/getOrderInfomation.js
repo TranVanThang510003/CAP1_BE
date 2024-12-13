@@ -11,17 +11,25 @@ const getOrderInfomation = async (userId) => {
         const result = await pool.request()
             .input('userId', sql.Int, userId)
             .query(`
+                WITH CTE_TOUR_IMAGES AS (
+                    SELECT
+                        TI.TOUR_ID,
+                        TI.IMAGE_URL,
+                        ROW_NUMBER() OVER (PARTITION BY TI.TOUR_ID ORDER BY TI.IMAGE_ID) AS row_num
+                    FROM [TRIPGO1].[dbo].[TOUR_IMAGES] TI
+                    )
                 SELECT
                     B.BOOKING_ID AS bookingId,
                     B.DATE AS departureDate,
-                    TS.END_DATE AS endDate, -- lấy ngày kết thúc từ bảng TOUR_SCHEDULE
+                    TS.END_DATE AS endDate,
                     B.TOTAL_PRICE AS totalPrice,
                     B.STATUS AS status,
                     T.TOUR_NAME AS tourName,
-                    T.TOUR_ID as tourId,
+                    T.TOUR_ID AS tourId,
                     B.ADULT_COUNT AS adultCount,
                     B.CHILD_COUNT AS childCount,
-                    B.TOTAL_PRICE AS tourPrice
+                    B.TOTAL_PRICE AS tourPrice,
+                    CTE.IMAGE_URL AS imageUrl
                 FROM
                     [TRIPGO1].[dbo].[TOUR_BOOKINGS] B
                     LEFT JOIN
@@ -30,6 +38,8 @@ const getOrderInfomation = async (userId) => {
                     [TRIPGO1].[dbo].[TOUR] T ON B.TOUR_ID = T.TOUR_ID
                     LEFT JOIN
                     [TRIPGO1].[dbo].[TOUR_SCHEDULE] TS ON B.TOUR_ID = TS.TOUR_ID AND B.DATE = TS.DEPARTURE_DATE
+                    LEFT JOIN
+                    CTE_TOUR_IMAGES CTE ON T.TOUR_ID = CTE.TOUR_ID AND CTE.row_num = 1 -- Lấy chỉ ảnh đầu tiên
                 WHERE
                     U.USER_ID = @userId
             `);
