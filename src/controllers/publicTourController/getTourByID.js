@@ -39,14 +39,14 @@ const getTourById = async (req, res) => {
                     SELECT 
                         COUNT(RV.REVIEW_ID) AS reviewCount,
                         AVG(RV.RATING) AS averageRating
-                    FROM [TRIPGO1].[dbo].[TOUR_REVIEW] RV
+                    FROM [TRIPGO1].[dbo].[TOUR_REVIEWS] RV
                     WHERE RV.TOUR_ID = T.TOUR_ID
                 ) AS ReviewData
                 OUTER APPLY (
                     SELECT TOP 1 
                         RV.COMMENTS AS latestComment,
                         U.USERNAME AS userName
-                    FROM [TRIPGO1].[dbo].[TOUR_REVIEW] RV
+                    FROM [TRIPGO1].[dbo].[TOUR_REVIEWS] RV
                     LEFT JOIN [TRIPGO1].[dbo].[USERS] U ON RV.USER_ID = U.USER_ID
                     WHERE RV.TOUR_ID = @tourId
                     ORDER BY RV.REVIEW_DATE DESC

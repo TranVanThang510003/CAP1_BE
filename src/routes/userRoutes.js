@@ -5,6 +5,8 @@ const getOrderInfomation = require('../controllers/userController/getOrderInfoma
 const { toggleFavorite } = require('../controllers/userController/favoriteController');
 const getFavoriteTours= require('../controllers/userController/getFavorites');
 const addReview =require('../controllers/userController/addReview');
+const getReviewStatus = require('../controllers/userController/getReviewStatus');
+const { multipleUpload } = require('../middlewares/uploadMiddlewares');
 // ===== Routes liên quan đến người dùng =====
 router.get('/:id', getUserById);
 router.put('/:id', updateUser);
@@ -19,15 +21,24 @@ router.get('/orders/:userId', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-router.post('/review', async (req, res) => {
-    const reviewData = req.body;
-
+router.post('/review', multipleUpload, async (req, res) => {
+    console.log('Files:', req.files); // Kiểm tra dữ liệu nhận từ multer
     try {
-        const result = await addReview(reviewData);
-        res.status(201).json(result);
+        const result = await addReview(req);
+        res.status(200).json(result);
     } catch (error) {
-        console.error('Lỗi khi lưu đánh giá:', error);
-        res.status(500).json({ error: 'Đã xảy ra lỗi khi lưu đánh giá' });
+        console.error('Error adding review:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra khi thêm đánh giá.', error: error.message });
+    }
+});
+
+
+router.get('/reviews/status', async (req, res) => {
+    try {
+        const result = await getReviewStatus(req);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ message: 'Có lỗi xảy ra khi kiểm tra trạng thái đánh giá.' });
     }
 });
 module.exports = router;
