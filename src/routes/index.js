@@ -17,7 +17,7 @@ router.use('/', authRoutes);
 router.use('/', dashboardRoutes) ;
 router.use('/staff', staffRoutes) ;
 router.use('/public-tours', tourRoutes);
-router.use('/accounts', adminRoutes);
+router.use('/admin', adminRoutes);
 router.use('/hotels', hotelRoutes);
 router.use('/activities', funActivityRoutes);
 router.use('/', paymentRoutes);

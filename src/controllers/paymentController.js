@@ -44,7 +44,7 @@ function initPaymentRoutes(app) {
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
       amount: parseInt(total_price),
-      callback_url: 'https://3c0a-42-116-28-99.ngrok-free.app/callback',
+      callback_url: 'https://8548-2402-800-6205-1e6b-c0fe-3be9-fbbf-f447.ngrok-free.app/callback',
       description: `Payment for tour #${tour_id}`,
       bank_code: '',
     };

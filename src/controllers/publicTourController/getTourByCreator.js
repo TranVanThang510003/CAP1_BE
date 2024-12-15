@@ -87,7 +87,7 @@ FROM [TRIPGO1].[dbo].[TOUR] T
         SELECT
             COUNT(RV.REVIEW_ID) AS reviewCount,
             AVG(RV.RATING) AS averageRating
-        FROM [TRIPGO1].[dbo].[TOUR_REVIEW] RV
+        FROM [TRIPGO1].[dbo].[TOUR_REVIEWS] RV
         WHERE RV.TOUR_ID = T.TOUR_ID
     ) AS ReviewData
 WHERE T.CREATED_BY = @creatorId

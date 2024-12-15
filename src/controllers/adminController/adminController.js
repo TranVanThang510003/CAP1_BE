@@ -1,5 +1,5 @@
 const sql = require('mssql');
-const { connectToDB } = require('../config/db');
+const { connectToDB } = require('../../config/db');
 
 // Function to get all users
 const getAllAccount = async (req, res) => {
