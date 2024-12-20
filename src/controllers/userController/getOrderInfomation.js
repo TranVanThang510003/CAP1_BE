@@ -42,6 +42,8 @@ const getOrderInfomation = async (userId) => {
                     CTE_TOUR_IMAGES CTE ON T.TOUR_ID = CTE.TOUR_ID AND CTE.row_num = 1 -- Lấy chỉ ảnh đầu tiên
                 WHERE
                     U.USER_ID = @userId
+                ORDER BY
+                    B.CREATED_AT DESC -- Sắp xếp theo thời gian tạo (mới nhất ở đầu)
             `);
 
         return { orders: result.recordset };

@@ -1,5 +1,5 @@
 const sql = require('mssql');
-const { connectToDB } = require('../config/db');
+const { connectToDB } = require('../../config/db');
 
 // Hàm lấy danh sách các khách sạn
 const getAllHotels = async (req, res) => {

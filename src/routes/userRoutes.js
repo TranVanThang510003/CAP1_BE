@@ -6,7 +6,9 @@ const { toggleFavorite } = require('../controllers/userController/favoriteContro
 const getFavoriteTours= require('../controllers/userController/getFavorites');
 const addReview =require('../controllers/userController/addReview');
 const getReviewStatus = require('../controllers/userController/getReviewStatus');
-const { multipleUpload } = require('../middlewares/uploadMiddlewares');
+const addStaffRequest = require('../controllers/userController/addStaffRequest');
+const { multipleUpload ,singleUpload } = require('../middlewares/uploadMiddlewares');
+const { staffUploadMiddleware } = require('../middlewares/staffUploadMiddleware');
 // ===== Routes liên quan đến người dùng =====
 router.get('/:id', getUserById);
 router.put('/:id', updateUser);
@@ -41,4 +43,17 @@ router.get('/reviews/status', async (req, res) => {
         res.status(500).json({ message: 'Có lỗi xảy ra khi kiểm tra trạng thái đánh giá.' });
     }
 });
+router.post('/staff-request', staffUploadMiddleware, async (req, res) => {
+    try {
+        console.log('Files:', req.files); // Kiểm tra file nhận được từ multer
+        console.log('Body:', req.body); // Kiểm tra dữ liệu khác từ form
+
+        const result = await addStaffRequest(req);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error handling staff request:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra khi xử lý yêu cầu.' });
+    }
+});
+
 module.exports = router;

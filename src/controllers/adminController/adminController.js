@@ -15,7 +15,8 @@ const getAllAccount = async (req, res) => {
                 U.ROLE_ID as roleId,
                 R.ROLE_NAME AS role
             FROM USERS U
-            LEFT JOIN ROLE R ON U.ROLE_ID = R.ROLE_ID;
+            LEFT JOIN ROLE R ON U.ROLE_ID = R.ROLE_ID
+             WHERE U.ROLE_ID != 3;
         `);
 
         const users = result.recordset;

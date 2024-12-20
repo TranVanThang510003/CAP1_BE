@@ -20,7 +20,7 @@ const {
   getAccountById,
   updateAccountRole,
 } = require('../controllers/adminController/adminController');
-const hotelController = require('../controllers/hotelController');
+const hotelController = require('../controllers/hotelController/hotelController');
 const funActivityController = require('../controllers/funActivityController');
 const initPaymentRoutes = require('../controllers/paymentController');
 const {
