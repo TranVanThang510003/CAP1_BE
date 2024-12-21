@@ -7,6 +7,7 @@ const getFavoriteTours= require('../controllers/userController/getFavorites');
 const addReview =require('../controllers/userController/addReview');
 const getReviewStatus = require('../controllers/userController/getReviewStatus');
 const addStaffRequest = require('../controllers/userController/addStaffRequest');
+const getStaffRequestByUserId= require('../controllers/userController/getStaffRequestByUserId');
 const { multipleUpload ,singleUpload } = require('../middlewares/uploadMiddlewares');
 const { staffUploadMiddleware } = require('../middlewares/staffUploadMiddleware');
 // ===== Routes liên quan đến người dùng =====
@@ -23,6 +24,7 @@ router.get('/orders/:userId', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 router.post('/review', multipleUpload, async (req, res) => {
     console.log('Files:', req.files); // Kiểm tra dữ liệu nhận từ multer
     try {
@@ -53,6 +55,18 @@ router.post('/staff-request', staffUploadMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Error handling staff request:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra khi xử lý yêu cầu.' });
+    }
+});
+
+// Route: Lấy yêu cầu trở thành staff của người dùng theo userId
+router.get('/staff-request/:userId', async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        const staffRequests = await getStaffRequestByUserId(userId); // Fix variable name and call correct function
+        res.status(200).json(staffRequests);
+    } catch (error) {
+        console.error('Error fetching staff requests:', error.message);
+        res.status(500).json({ error: 'Có lỗi xảy ra khi lấy thông tin yêu cầu staff.' });
     }
 });
 

@@ -184,35 +184,42 @@ const getReportforStaff = async (req, res) => {
 const manageTransaction = async (req, res) => {
     try {
         const pool = await connectToDB();
-        const result = await pool.request().query(`SELECT 
-                    USERS.USERNAME,
-                    TOUR.TOUR_NAME,
-                    TOUR.DESCRIPTION,
-                    TOUR.HIGHLIGHTS,
-                    TOUR_BOOKINGS.BOOKING_ID,
-                    TOUR_BOOKINGS.TOTAL_PRICE,
-                    TOUR_BOOKINGS.DATE,
-                    TOUR_BOOKINGS.ADULT_COUNT,
-                    TOUR_BOOKINGS.CHILD_COUNT,
-                    TOUR.PRICE_ADULT,
-                    TOUR.PRICE_CHILD,
-                    TOUR.ADDRESS,
-                    TOUR.DISTRICT,
-                    TOUR.PROVINCE,
-                    TOUR.WARD
-                FROM 
-                    USERS
-                JOIN 
-                    TOUR_BOOKINGS
-                ON 
+        const result = await pool.request().query(`
+            SELECT
+                USERS.USERNAME,
+                TOUR.TOUR_NAME,
+                TOUR.DESCRIPTION,
+                TOUR.HIGHLIGHTS,
+                TOUR_BOOKINGS.BOOKING_ID,
+                TOUR_BOOKINGS.TOTAL_PRICE,
+                TOUR_BOOKINGS.DATE,
+                TOUR_BOOKINGS.ADULT_COUNT,
+                TOUR_BOOKINGS.CHILD_COUNT,
+                TOUR_SCHEDULE.PRICE_ADULT,
+                TOUR_SCHEDULE.PRICE_CHILD,
+                TOUR_BOOKINGS.CREATED_AT,
+                TOUR.ADDRESS,
+                TOUR.DISTRICT,
+                TOUR.PROVINCE,
+                TOUR.WARD
+            FROM
+                USERS
+                    JOIN
+                TOUR_BOOKINGS
+                ON
                     USERS.USER_ID = TOUR_BOOKINGS.USER_ID
-                JOIN 
-                    TOUR
-                ON 
+                    JOIN
+                TOUR
+                ON
                     TOUR_BOOKINGS.TOUR_ID = TOUR.TOUR_ID
-                WHERE 
-                    TOUR_BOOKINGS.STATUS = 'success';
-                `);
+                    JOIN
+                TOUR_SCHEDULE
+                ON
+                    TOUR_BOOKINGS.TOUR_ID = TOUR_SCHEDULE.TOUR_ID
+                        AND TOUR_BOOKINGS.DATE = TOUR_SCHEDULE.DEPARTURE_DATE
+            WHERE
+                TOUR_BOOKINGS.STATUS = 'success';
+        `);
         const infor = result.recordset;
         return res.json({ Manage_Transaction: infor });
     } catch (error) {
@@ -225,6 +232,7 @@ const manageTransaction = async (req, res) => {
             });
     }
 };
+
 
 const deleteTransaction = async (req, res) => {
     try {
