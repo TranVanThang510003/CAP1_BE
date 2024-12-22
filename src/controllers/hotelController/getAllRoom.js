@@ -19,6 +19,7 @@ const getAllRoom = async (req, res) => {
                 BT.ROOM_SIZE,
                 BT.PRICE,
                 BT.BED_TYPE_MASTER_ID,
+                BT.BED_TYPE_ID,
                 BTM.BED_TYPE_NAME,
                 BT.BED_QUANTITY,
                 RA.AMENITY_NAME, -- Tiện nghi phòng
@@ -72,6 +73,7 @@ const getAllRoom = async (req, res) => {
 
             if (!bed && row.BED_TYPE_NAME) {
                 bed = {
+                    BED_TYPE_ID:row.BED_TYPE_ID,
                     BED_TYPE_MASTER_ID: row.BED_TYPE_MASTER_ID,
                     BED_TYPE_NAME: row.BED_TYPE_NAME,
                     BED_QUANTITY: row.BED_QUANTITY,
