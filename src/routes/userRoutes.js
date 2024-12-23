@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { getUserById, updateUser } = require('../controllers/userController/UserController');
 const getOrderInfomation = require('../controllers/userController/getOrderInfomation');
+const cancelOrder = require("../controllers/userController/cancelOrder");
+
+
 const { toggleFavorite } = require('../controllers/userController/favoriteController');
 const getFavoriteTours= require('../controllers/userController/getFavorites');
 const addReview =require('../controllers/userController/addReview');
@@ -24,6 +27,7 @@ router.get('/orders/:userId', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+router.delete("/orders/cancel/:bookingId", cancelOrder);
 
 router.post('/review', multipleUpload, async (req, res) => {
     console.log('Files:', req.files); // Kiểm tra dữ liệu nhận từ multer

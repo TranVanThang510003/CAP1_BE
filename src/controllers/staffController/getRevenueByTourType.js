@@ -19,6 +19,7 @@ const getRevenueByTourType = async (creatorId) => {
                     TOUR_TYPE TT ON T.TOUR_TYPE_ID = TT.TOUR_TYPE_ID
                 WHERE 
                     @creatorId IS NULL OR T.CREATED_BY = @creatorId
+                    AND B.STATUS = 'success'
                 GROUP BY 
                     TT.TOUR_TYPE_NAME, TT.DESCRIPTION
                 ORDER BY 

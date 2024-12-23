@@ -12,6 +12,8 @@ const getTopDestinations = async (req, res) => {
                 TOUR_BOOKINGS B
                     LEFT JOIN
                 TOUR T ON B.TOUR_ID = T.TOUR_ID
+            WHERE
+                B.STATUS = 'success'
             GROUP BY
                 T.PROVINCE
             ORDER BY

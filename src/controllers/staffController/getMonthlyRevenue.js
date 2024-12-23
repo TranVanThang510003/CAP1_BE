@@ -15,16 +15,17 @@ const getMonthlyRevenue = async (req, res) => {
             .input("creatorId", sql.Int, creatorId)
             .query(`
                 SELECT
-                    FORMAT(B.DATE, 'yyyy-MM') AS month, -- Lấy tháng
+                    FORMAT(B.CREATED_AT, 'yyyy-MM') AS month, -- Lấy tháng
                     SUM(B.TOTAL_PRICE) AS totalRevenue -- Tính tổng doanh thu
                 FROM
                     TOUR_BOOKINGS B
                     JOIN
-                    TOUR T ON B.TOUR_ID = T.TOUR_ID
+                    TOUR T ON B.TOUR_ID = T.TOUR_ID 
                 WHERE
                     T.CREATED_BY = @creatorId -- Lọc theo creatorId
+                   AND B.STATUS = 'success'
                 GROUP BY
-                    FORMAT(B.DATE, 'yyyy-MM') -- Nhóm theo tháng
+                    FORMAT(B.CREATED_AT, 'yyyy-MM') -- Nhóm theo tháng
                 ORDER BY
                     month; -- Sắp xếp theo tháng
             `);

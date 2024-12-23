@@ -34,6 +34,7 @@ const getOrdersByTour = async (creatorId) => {
                     LEFT JOIN [TRIPGO1].[dbo].[TOUR_SCHEDULE] TS ON B.TOUR_ID = TS.TOUR_ID AND B.DATE = TS.DEPARTURE_DATE
                 WHERE
                     T.CREATED_BY = @creatorId -- Lọc tour theo creatorId
+                    AND B.STATUS='success'
                 ORDER BY
                     T.TOUR_NAME, B.DATE
             `);

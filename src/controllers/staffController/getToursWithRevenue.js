@@ -13,7 +13,7 @@ const getToursWithRevenue = async (creatorId) => {
                     ISNULL(SUM(B.TOTAL_PRICE), 0) AS revenue
                 FROM
                     [TRIPGO1].[dbo].[TOUR] T
-                    LEFT JOIN [TRIPGO1].[dbo].[TOUR_BOOKINGS] B ON B.TOUR_ID = T.TOUR_ID
+                    LEFT JOIN [TRIPGO1].[dbo].[TOUR_BOOKINGS] B ON B.TOUR_ID = T.TOUR_ID  AND B.STATUS = 'success'
                 WHERE
                     T.CREATED_BY = @creatorId
                 GROUP BY

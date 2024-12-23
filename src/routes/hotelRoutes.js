@@ -9,6 +9,8 @@ const deleteBedByName= require('../controllers/hotelController/deleteBedByName')
 const addRoom = require('../controllers/hotelController/addRoom');
 const updateBed = require('../controllers/hotelController/updateBed');
 const getHotelDetails = require('../controllers/hotelController/getHotelDetails')
+const updateRoomImages = require('../controllers/hotelController/updateRoomImages');
+
 const router = express.Router();
 
 router.get('/', getAllHotels);
@@ -19,5 +21,6 @@ router.put('/update-hotel/:hotelId', multipleUpload, updateHotel);
 router.post('/add-room', multipleUpload, addRoom)
 router.delete('/delete-bed/:roomTypeId/:bedTypeId', deleteBedByName);
 router.put('/update-bed/:roomTypeId/:oldBedTypeId', updateBed);
+router.put('/update-room-images/:roomId', multipleUpload, updateRoomImages);
 
 module.exports = router;
