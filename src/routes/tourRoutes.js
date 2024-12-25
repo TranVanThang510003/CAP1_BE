@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const getTourReviews = require('../controllers/publicTourController/getTourReviews');
 const getAllTours = require('../controllers/publicTourController/getAllTours');
 const getTourById = require('../controllers/publicTourController/getTourById');
 const getToursByCreator = require('../controllers/publicTourController/getTourByCreator');
@@ -7,10 +8,13 @@ const createTour = require('../controllers/publicTourController/createTour');
 const updateTour = require('../controllers/publicTourController/updateTour');
 const deleteTour = require('../controllers/publicTourController/deleteTour');
 const { authenticateUser, verifyStaffRole } = require('../middlewares/authMiddleware');
+const getTopBookedTours = require("../controllers/publicTourController/getTopBookedTours");
 const { multipleUpload } = require('../middlewares/uploadMiddlewares');
 
 // Public tour routes
 router.get('/', getAllTours);
+router.get('/top-tours', getTopBookedTours);
+
 router.get('/:id', getTourById);
 router.get('/by-creator/:creatorId', async (req, res) => {
     const creatorId = parseInt(req.params.creatorId, 10);
@@ -33,5 +37,9 @@ router.get('/by-creator/:creatorId', async (req, res) => {
 router.post('/createTour', authenticateUser, verifyStaffRole, multipleUpload, createTour);
 router.put('/:id', authenticateUser, verifyStaffRole, multipleUpload, updateTour);
 router.delete('/:id', deleteTour);
+
+
+// Route để lấy đánh giá của tour
+router.get('/reviews/:tourId', getTourReviews);
 
 module.exports = router;

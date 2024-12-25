@@ -1,5 +1,6 @@
 const sql = require('mssql');
 const { connectToDB } = require('../config/db');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 // Hàm kiểm tra email
@@ -65,7 +66,7 @@ const login = async (req, res) => {
             // Thêm các trường khác nếu cần thiết
         };
 
-        res.json({ success: true, user: userInfo });
+        res.json({ success: true,message: 'Đăng nhập thành công!' , user: userInfo });
     } catch (err) {
         console.error('Lỗi đăng nhập:', err);
         res.status(500).json({ success: false, message: 'Lỗi máy chủ.' });
@@ -132,7 +133,68 @@ const register = async (req, res) => {
 };
 
 
+const adminLogin = async (req, res) => {
+    const { email, password } = req.body;
 
+    try {
+        const pool = await connectToDB();
 
+        // Truy vấn kiểm tra tài khoản admin
+        const result = await pool.request()
+            .input('email', sql.NVarChar, email)
+            .query(`
+                SELECT
+                    U.USER_ID,
+                    U.USERNAME,
+                    U.EMAIL,
+                    U.PASSWORD,
+                    U.ROLE_ID,
+                    R.ROLE_NAME AS ROLE
+                FROM USERS U
+                         LEFT JOIN ROLE R ON U.ROLE_ID = R.ROLE_ID
+                WHERE U.EMAIL = @email AND U.ROLE_ID = 3
+            `);
 
-module.exports = { login, register };
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ success: false, message: 'Admin không tồn tại hoặc không có quyền!' });
+        }
+
+        const admin = result.recordset[0];
+
+        // Kiểm tra mật khẩu
+        const isMatch = await bcrypt.compare(password, admin.PASSWORD);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: 'Mật khẩu không đúng!' });
+        }
+
+        // Tạo token JWT
+        const token = jwt.sign(
+            {
+                id: admin.USER_ID,
+                username: admin.USERNAME,
+                email: admin.EMAIL,
+                role: admin.ROLE
+            },
+            process.env.JWT_SECRET,  // Chuỗi bí mật (SECRET) cần lưu trong biến môi trường
+            { expiresIn: '2h' }      // Thời gian hết hạn token
+        );
+
+        // Trả về thông tin và token
+        res.json({
+            success: true,
+            message: 'Đăng nhập admin thành công!',
+            admin: {
+                id: admin.USER_ID,
+                username: admin.USERNAME,
+                email: admin.EMAIL,
+                role: admin.ROLE
+            },
+            token
+        });
+    } catch (err) {
+        console.error('Lỗi đăng nhập admin:', err);
+        res.status(500).json({ success: false, message: 'Lỗi máy chủ.' });
+    }
+};
+
+module.exports = { login, register,adminLogin };

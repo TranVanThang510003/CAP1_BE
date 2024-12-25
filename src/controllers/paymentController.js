@@ -1,6 +1,6 @@
 const axios = require('axios').default;
 const CryptoJS = require('crypto-js');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const sql = require('mssql');
 const bodyParser = require('body-parser');
 const qs = require('qs');
@@ -44,10 +44,11 @@ function initPaymentRoutes(app) {
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
       amount: parseInt(total_price),
-      callback_url: 'https://7081-103-156-46-86.ngrok-free.app/callback',
+      callback_url: 'https://6396-2402-800-6205-1e6b-9069-c805-4e0a-ab5e.ngrok-free.app/callback',
       description: `Payment for tour #${tour_id}`,
       bank_code: '',
     };
+    console.log("Dữ liệu order:", order);
 
     const data = `${config.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
     order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
@@ -136,9 +137,7 @@ function initPaymentRoutes(app) {
         // Cập nhật thông tin giao dịch vào cơ sở dữ liệu
         const pool = await connectToDB();
         const serviceDateStr = JSON.parse(dataJson.embed_data).service_date;
-        const serviceDate = moment(serviceDateStr, 'YYYY-MM-DD', true).isValid()
-          ? moment(serviceDateStr, 'YYYY-MM-DD').toDate()
-          : null;
+        const serviceDate = new Date(serviceDateStr); // Dùng trực tiếp ngày từ callback
 
         const tourId = JSON.parse(dataJson.embed_data).tour_id;
         const userId = JSON.parse(dataJson.embed_data).user_id;

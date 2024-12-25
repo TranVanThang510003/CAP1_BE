@@ -37,14 +37,16 @@ OUTER APPLY (
     ORDER BY IMAGE_ID -- Sắp xếp theo thứ tự (có thể dùng thứ tự khác nếu cần)
 ) I
 LEFT JOIN [TRIPGO1].[dbo].[TOUR_TYPE] TT ON T.TOUR_TYPE_ID = TT.TOUR_TYPE_ID
-OUTER APPLY (
-    SELECT 
-        MIN(S.DEPARTURE_DATE) AS NEAREST_DEPARTURE_DATE,
-        MIN(S.PRICE_ADULT) AS NEAREST_PRICE_ADULT,
-        MIN(DATEDIFF(DAY, S.DEPARTURE_DATE, S.END_DATE))+1 AS DURATION
-    FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
-    WHERE S.TOUR_ID = T.TOUR_ID AND S.DEPARTURE_DATE >= GETDATE()
-) AS S
+                OUTER APPLY (
+                SELECT
+                MIN(S.DEPARTURE_DATE) AS NEAREST_DEPARTURE_DATE,
+                MIN(S.PRICE_ADULT) AS NEAREST_PRICE_ADULT, -- Giá người lớn từ lịch gần nhất
+                MIN(DATEDIFF(DAY, S.DEPARTURE_DATE, S.END_DATE))+1 AS DURATION
+                FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
+                WHERE S.TOUR_ID = T.TOUR_ID
+                AND (S.DEPARTURE_DATE >= GETDATE() OR S.DEPARTURE_DATE <= GETDATE()) -- Lọc lịch trình trong tương lai hoặc quá khứ gần nhất
+                ) AS S
+
 OUTER APPLY (
     SELECT 
         COUNT(B.BOOKING_ID) AS nub_booking,
@@ -56,7 +58,7 @@ OUTER APPLY (
     SELECT 
         COUNT(RV.REVIEW_ID) AS reviewCount,
         AVG(RV.RATING) AS averageRating
-    FROM [TRIPGO1].[dbo].[TOUR_REVIEW] RV
+    FROM [TRIPGO1].[dbo].[TOUR_REVIEWS] RV
     WHERE RV.TOUR_ID = T.TOUR_ID
 ) AS ReviewData
 ORDER BY S.NEAREST_DEPARTURE_DATE;
@@ -79,7 +81,7 @@ ORDER BY S.NEAREST_DEPARTURE_DATE;
         ISNULL(S.END_DATE, S.DEPARTURE_DATE) AS endDate,
         S.PRICE_ADULT AS priceAdult,
         S.PRICE_CHILD AS priceChild,
-        S.AVAILABLE_ADULT_COUNT AS availableAdults
+        S.QUANTITY AS quantity
       FROM [TRIPGO1].[dbo].[TOUR_SCHEDULE] S
       ORDER BY S.DEPARTURE_DATE ASC;
     `);
