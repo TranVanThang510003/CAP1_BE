@@ -8,7 +8,7 @@ const config = {
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,
   options: {
-    encrypt: true, // Nếu dùng Azure, bạn cần đặt encrypt là true
+    encrypt: false, // Nếu dùng Azure, bạn cần đặt encrypt là true
     trustServerCertificate: true, // Dùng khi kết nối cục bộ
    charset: 'utf8' 
   },
