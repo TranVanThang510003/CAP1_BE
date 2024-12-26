@@ -10,6 +10,8 @@ const deleteTour = require('../controllers/publicTourController/deleteTour');
 const { authenticateUser, verifyStaffRole } = require('../middlewares/authMiddleware');
 const getTopBookedTours = require("../controllers/publicTourController/getTopBookedTours");
 const { multipleUpload } = require('../middlewares/uploadMiddlewares');
+const { getSuggestedTours } = require('../controllers/tourController'); // Import suggested tours
+const { authenticateToken } = require('../middlewares/authMiddleware'); // Import auth middleware
 
 // Public tour routes
 router.get('/', getAllTours);
@@ -38,6 +40,18 @@ router.post('/createTour', authenticateUser, verifyStaffRole, multipleUpload, cr
 router.put('/:id', authenticateUser, verifyStaffRole, multipleUpload, updateTour);
 router.delete('/:id', deleteTour);
 
+// Suggested tours route
+router.get('/suggested-tours', authenticateToken, async (req, res) => {
+    try {
+        const suggestedTours = await getSuggestedTours(req, res);
+        res.status(200).json({ suggestedTours });
+    } catch (error) {
+        res.status(500).json({
+            message: 'Lỗi khi gợi ý tour',
+            error: error.message,
+        });
+    }
+});
 
 // Route để lấy đánh giá của tour
 router.get('/reviews/:tourId', getTourReviews);

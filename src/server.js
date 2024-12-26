@@ -4,8 +4,14 @@ require('dotenv').config();
 const cors = require('cors');
 const path = require('path');
 const morgan = require('morgan'); // Ghi log các request
+const bodyParser = require('body-parser'); // Parse body JSON
 const { errorHandler, notFoundHandler } = require('../src/middlewares/errorHandler.js'); // Middleware xử lý lỗi
 const { connectToDB } = require('../src/config/db.js'); // Kết nối SQL Server
+
+// Import các route và model mới
+const db = require('./models');
+const answerRoutes = require('./routes/answerRoutes');
+const tourRoutes = require('./routes/tourRoutes');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -30,19 +36,26 @@ app.use(morgan('dev'));
 
 // Cấu hình middleware để parse JSON từ request body
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use(bodyParser.json()); // body-parser middleware
 
 // Cấu hình CORS
 app.use(cors());
 
 // Cấu hình để phục vụ các tệp tĩnh từ thư mục public
+app.use('/uploads', express.static('uploads'));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
-// Sử dụng route API
-app.use('', apiRoutes);
+// Thêm route API mới
+app.use('/api/answers', answerRoutes);
+app.use('/api/tours', tourRoutes);
 
 // Middleware xử lý route không tồn tại
 app.use(notFoundHandler);
 
 // Middleware xử lý lỗi
 app.use(errorHandler);
+
+// Sync database từ Sequelize
+db.sequelize.sync().then(() => {
+  console.log('Database connected and synced');
+});
