@@ -17,18 +17,19 @@
   
   const jwt = require('jsonwebtoken');
 
-exports.authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Access token required' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: 'Invalid token' });
+  exports.authenticateToken = (req, res, next) => {
+    const token = req.headers['authorization'];
+  
+    if (!token) {
+      return res.status(401).json({ message: 'Access token required' });
     }
-    req.user = user;
-    next();
-  });
-};
+  
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({ message: 'Invalid token' });
+      }
+      req.user = user;
+      next();
+    });
+  };
+  

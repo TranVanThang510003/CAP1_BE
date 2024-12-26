@@ -1,17 +1,45 @@
-const { analyzeUserAnswers } = require('../services/aiService');
 const { getFilteredTours } = require('../services/tourService');
 
-exports.getSuggestedTours = async (req, res) => {
+const mapPriceRange = (priceCategory) => {
+  switch (priceCategory) {
+    case 'economy':
+      return [100000, 1500000];
+    case 'moderate':
+      return [2000000, 4000000];
+    case 'luxury':
+      return [5000000, Infinity];
+    default:
+      throw new Error('Invalid price category');
+  }
+};
+
+exports.getFilteredTours = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { tourTypeId, startDate, endDate, priceCategory, serviceType, province } = req.query;
 
-    const preferences = await analyzeUserAnswers(userId);
+    if (!tourTypeId || !startDate || !endDate || !priceCategory || !serviceType || !province) {
+      return res.status(400).json({
+        message: 'Missing required filters: tourTypeId, startDate, endDate, priceCategory, serviceType, province',
+      });
+    }
 
-    const tours = await getFilteredTours(preferences);
+    // Map price range
+    const [minPrice, maxPrice] = mapPriceRange(priceCategory);
 
+    const filters = {
+      tourTypeId: parseInt(tourTypeId, 10),
+      startDate,
+      endDate,
+      minPrice,
+      maxPrice,
+      serviceType,
+      province,
+    };
+
+    const tours = await getFilteredTours(filters);
     res.status(200).json({ tours });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching filtered tours:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

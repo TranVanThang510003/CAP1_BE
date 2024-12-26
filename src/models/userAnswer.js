@@ -1,10 +1,11 @@
 module.exports = (sequelize, DataTypes) => {
     const UserAnswer = sequelize.define('UserAnswer', {
-      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-      userId: { type: DataTypes.INTEGER, allowNull: false },
-      questionId: { type: DataTypes.INTEGER, allowNull: false },
-      answer: { type: DataTypes.STRING, allowNull: false },
+      ANSWER_ID: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+      USER_ID: { type: DataTypes.INTEGER, allowNull: false },
+      QUESTION_ID: { type: DataTypes.INTEGER, allowNull: false },
+      ANSWER_NAME: { type: DataTypes.STRING, allowNull: false },
     });
+  
     return UserAnswer;
   };
   

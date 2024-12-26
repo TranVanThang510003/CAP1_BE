@@ -30,8 +30,8 @@ def classify():
 
         # Danh sách nhãn dùng cho Zero-Shot Classification
         candidate_labels = [
-            "Adventure", "Relaxation", "Family", "Romantic", "Cultural", 
-            "Sports", "Beach", "Nature", "Historical", "Luxury"
+            "Tour mạo hiểm", "Tour văn hóa", "Tour nghỉ dưỡng", "Tour sinh thái", "Tour đi thuyền", 
+            "Tour ẩm thực", "Khám phá đảo"
         ]
 
         # Lưu trữ kết quả phân loại

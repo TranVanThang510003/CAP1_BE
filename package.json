@@ -36,6 +36,9 @@
     "nodemon": "^3.1.7",
     "path": "^0.12.7",
     "qs": "^6.13.0",
-    "sib-api-v3-sdk": "^8.5.0"
+    "sequelize": "^6.37.5",
+    "sequelize-cli": "^6.6.2",
+    "sib-api-v3-sdk": "^8.5.0",
+    "tedious": "^18.6.1"
   }
 }

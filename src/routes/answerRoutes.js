@@ -1,9 +1,9 @@
 const express = require('express');
-const { saveAnswers } = require('../controllers/answerController');
+const router = express.Router();
+const { saveAnswers, getSuggestedTours } = require('../controllers/answerController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 
-const router = express.Router();
-
-router.post('/save-answers', authenticateToken, saveAnswers);
+router.post('/save', authenticateToken, saveAnswers);
+router.get('/suggested-tours', authenticateToken, getSuggestedTours);
 
 module.exports = router;
