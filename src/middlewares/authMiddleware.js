@@ -13,8 +13,6 @@
     }
   };
   
-module.exports = { verifyStaffRole , authenticateUser, };
-
 const jwt = require('jsonwebtoken');
 const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization'];
@@ -30,5 +28,4 @@ const authenticateToken = (req, res, next) => {
     res.status(403).json({ message: 'Token không hợp lệ', error: error.message });
   }
 };
-module.exports = {authenticateToken};
-  
+module.exports = {authenticateToken, verifyStaffRole, authenticateUser};

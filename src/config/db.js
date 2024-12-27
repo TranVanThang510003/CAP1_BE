@@ -1,28 +1,28 @@
-const sql = require('mssql');
+const { Sequelize } = require('sequelize');
 require('dotenv').config();
+
 console.log('Connecting to database:', process.env.DB_DATABASE);
 
-const config = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER,
-  database: process.env.DB_DATABASE,
-  options: {
-    encrypt: false, // Nếu dùng Azure, bạn cần đặt encrypt là true
-    trustServerCertificate: true, // Dùng khi kết nối cục bộ
-   charset: 'utf8' 
+const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_SERVER,
+  dialect: 'mssql',
+  dialectOptions: {
+    options: {
+      encrypt: false, // Nếu dùng Azure, đặt true
+      trustServerCertificate: true, // Nếu kết nối cục bộ
+    },
   },
-};
+  logging: console.log, // Log các truy vấn SQL (tắt nếu không cần)
+});
 
 const connectToDB = async () => {
   try {
-    const pool = await sql.connect(config);
+    await sequelize.authenticate();
     console.log('Kết nối thành công đến SQL Server!');
-    return pool;
   } catch (error) {
-    console.error('Lỗi khi kết nối đến SQL Server:', error);
+    console.error('Lỗi khi kết nối đến SQL Server:', error.message || error);
     throw error;
   }
 };
 
-module.exports = {connectToDB };
+module.exports = { sequelize, connectToDB };

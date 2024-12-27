@@ -1,35 +1,15 @@
 const express = require('express');
-const apiRoutes = require('../src/routes/index');
-require('dotenv').config();
 const cors = require('cors');
 const path = require('path');
 const morgan = require('morgan'); // Ghi log các request
 const bodyParser = require('body-parser'); // Parse body JSON
 const { errorHandler, notFoundHandler } = require('../src/middlewares/errorHandler.js'); // Middleware xử lý lỗi
-const { connectToDB } = require('../src/config/db.js'); // Kết nối SQL Server
-
-// Import các route và model mới
-const db = require('./models');
-const answerRoutes = require('./routes/answerRoutes');
-const tourRoutes = require('./routes/tourRoutes');
+const { connectToDB } = require('../src/config/db'); // Kết nối Sequelize
+const db = require('./models'); // Import models
 
 const app = express();
 const port = process.env.PORT || 3000;
 const hostname = process.env.HOST_NAME || 'localhost';
-
-// Kết nối cơ sở dữ liệu
-connectToDB()
-  .then(() => {
-    console.log('Kết nối SQL Server thành công!');
-    // Chỉ khởi động server sau khi kết nối DB thành công
-    app.listen(port, hostname, () => {
-      console.log(`Server đang chạy tại http://${hostname}:${port}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Không thể kết nối cơ sở dữ liệu:', err.message);
-    process.exit(1); // Thoát nếu không kết nối được
-  });
 
 // Middleware ghi log các request
 app.use(morgan('dev'));
@@ -45,18 +25,36 @@ app.use(cors());
 app.use('/uploads', express.static('uploads'));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
-// Thêm route API mới
-app.use('/api/answers', answerRoutes);
-app.use('/api/tours', tourRoutes);
-app.use('/api', apiRoutes);
+// Kết nối cơ sở dữ liệu và đồng bộ models
+(async () => {
+  try {
+    await connectToDB();
+    console.log('Kết nối cơ sở dữ liệu thành công!');
 
-// Middleware xử lý route không tồn tại
-app.use(notFoundHandler);
+    await db.sequelize.sync(); // Đồng bộ models với cơ sở dữ liệu
+    console.log('Database connected and synced!');
 
-// Middleware xử lý lỗi
-app.use(errorHandler);
+    // Định nghĩa routes sau khi kết nối thành công
+    const answerRoutes = require('./routes/answerRoutes');
+    const tourRoutes = require('./routes/tourRoutes');
+    const apiRoutes = require('../src/routes/index');
 
-// Sync database từ Sequelize
-db.sequelize.sync().then(() => {
-  console.log('Database connected and synced');
-});
+    app.use('/api/answers', answerRoutes);
+    app.use('/api/tours', tourRoutes);
+    app.use('/api', apiRoutes);
+
+    // Middleware xử lý route không tồn tại
+    app.use(notFoundHandler);
+
+    // Middleware xử lý lỗi
+    app.use(errorHandler);
+
+    // Khởi động server
+    app.listen(port, hostname, () => {
+      console.log(`Server đang chạy tại http://${hostname}:${port}`);
+    });
+  } catch (err) {
+    console.error('Không thể khởi động server:', err.message);
+    process.exit(1);
+  }
+})();

@@ -18,7 +18,6 @@ const saveAnswers = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
-module.exports = {saveAnswers};
 
 const getSuggestedTours = async (req, res) => {
   try {
@@ -33,4 +32,4 @@ const getSuggestedTours = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
-module.exports = {getSuggestedTours};
+module.exports = {getSuggestedTours, saveAnswers};
