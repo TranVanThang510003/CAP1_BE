@@ -1,0 +1,90 @@
+
+2024-12-27T07:47:34.774Z - Error: Not Found - /admin/getAllAccount
+Method: GET
+URL: /admin/getAllAccount
+Headers: {"user-agent":"PostmanRuntime/7.43.0","accept":"*/*","cache-control":"no-cache","postman-token":"27d3fe91-d372-4591-9533-678af9e60e4a","host":"localhost:3000","accept-encoding":"gzip, deflate, br","connection":"keep-alive"}
+Body: {}
+Stack Trace: Error: Not Found - /admin/getAllAccount
+    at notFoundHandler (D:\CAPSTONE1\CAP1_BE\src\middlewares\errorHandler.js:76:19)
+    at Layer.handle [as handle_request] (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:328:13)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:280:10)
+    at cors (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:188:7)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:224:17
+    at originCallback (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:214:15)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:219:13
+
+
+2024-12-27T07:47:52.085Z - Error: Not Found - /getAllAccount
+Method: GET
+URL: /getAllAccount
+Headers: {"user-agent":"PostmanRuntime/7.43.0","accept":"*/*","cache-control":"no-cache","postman-token":"574a166c-a1ab-423d-a352-3c37b7017b65","host":"localhost:3000","accept-encoding":"gzip, deflate, br","connection":"keep-alive"}
+Body: {}
+Stack Trace: Error: Not Found - /getAllAccount
+    at notFoundHandler (D:\CAPSTONE1\CAP1_BE\src\middlewares\errorHandler.js:76:19)
+    at Layer.handle [as handle_request] (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:328:13)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:280:10)
+    at cors (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:188:7)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:224:17
+    at originCallback (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:214:15)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:219:13
+
+
+2024-12-27T07:47:57.907Z - Error: Not Found - /
+Method: GET
+URL: /
+Headers: {"user-agent":"PostmanRuntime/7.43.0","accept":"*/*","cache-control":"no-cache","postman-token":"ca27ed71-7d22-4467-895e-66fcfe4c11c5","host":"localhost:3000","accept-encoding":"gzip, deflate, br","connection":"keep-alive"}
+Body: {}
+Stack Trace: Error: Not Found - /
+    at notFoundHandler (D:\CAPSTONE1\CAP1_BE\src\middlewares\errorHandler.js:76:19)
+    at Layer.handle [as handle_request] (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:328:13)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:280:10)
+    at cors (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:188:7)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:224:17
+    at originCallback (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:214:15)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:219:13
+
+
+2024-12-27T07:48:01.623Z - Error: Not Found - /
+Method: GET
+URL: /
+Headers: {"user-agent":"PostmanRuntime/7.43.0","accept":"*/*","cache-control":"no-cache","postman-token":"9e674024-9f42-453e-a7f6-34b33f9f2f56","host":"localhost:3000","accept-encoding":"gzip, deflate, br","connection":"keep-alive"}
+Body: {}
+Stack Trace: Error: Not Found - /
+    at notFoundHandler (D:\CAPSTONE1\CAP1_BE\src\middlewares\errorHandler.js:76:19)
+    at Layer.handle [as handle_request] (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:328:13)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:280:10)
+    at cors (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:188:7)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:224:17
+    at originCallback (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:214:15)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:219:13
+
+
+2024-12-27T07:48:05.720Z - Error: Not Found - /
+Method: GET
+URL: /
+Headers: {"user-agent":"PostmanRuntime/7.43.0","accept":"*/*","cache-control":"no-cache","postman-token":"16abba72-4a43-4439-aee6-af35e6ff5595","host":"localhost:3000","accept-encoding":"gzip, deflate, br","connection":"keep-alive"}
+Body: {}
+Stack Trace: Error: Not Found - /
+    at notFoundHandler (D:\CAPSTONE1\CAP1_BE\src\middlewares\errorHandler.js:76:19)
+    at Layer.handle [as handle_request] (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:328:13)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\CAPSTONE1\CAP1_BE\node_modules\express\lib\router\index.js:280:10)
+    at cors (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:188:7)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:224:17
+    at originCallback (D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:214:15)
+    at D:\CAPSTONE1\CAP1_BE\node_modules\cors\lib\index.js:219:13
+
