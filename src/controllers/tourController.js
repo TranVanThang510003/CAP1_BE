@@ -1,4 +1,4 @@
-const { getFilteredTours } = require('../services/tourService');
+const { getTour } = require('../services/tourService');
 
 const mapPriceRange = (priceCategory) => {
   switch (priceCategory) {
@@ -13,33 +13,35 @@ const mapPriceRange = (priceCategory) => {
   }
 };
 
-exports.getFilteredTours = async (req, res) => {
-  try {
-    const { tourTypeId, startDate, endDate, priceCategory, serviceType, province } = req.query;
-
-    if (!tourTypeId || !startDate || !endDate || !priceCategory || !serviceType || !province) {
-      return res.status(400).json({
-        message: 'Missing required filters: tourTypeId, startDate, endDate, priceCategory, serviceType, province',
-      });
+const getFilteredTours = async (req, res) => {
+    try {
+      const { tourTypeId, startDate, endDate, priceCategory, serviceType, province } = req.query;
+  
+      if (!tourTypeId || !startDate || !endDate || !priceCategory || !serviceType || !province) {
+        return res.status(400).json({
+          message: 'Missing required filters: tourTypeId, startDate, endDate, priceCategory, serviceType, province',
+        });
+      }
+  
+      // Map price range
+      const [minPrice, maxPrice] = mapPriceRange(priceCategory);
+  
+      const filters = {
+        tourTypeId: parseInt(tourTypeId, 10),
+        startDate,
+        endDate,
+        minPrice,
+        maxPrice,
+        serviceType,
+        province,
+      };
+  
+      const tours = await getFilteredTours(filters);
+      res.status(200).json({ tours });
+    } catch (error) {
+      console.error('Error fetching filtered tours:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
+  };
 
-    // Map price range
-    const [minPrice, maxPrice] = mapPriceRange(priceCategory);
-
-    const filters = {
-      tourTypeId: parseInt(tourTypeId, 10),
-      startDate,
-      endDate,
-      minPrice,
-      maxPrice,
-      serviceType,
-      province,
-    };
-
-    const tours = await getFilteredTours(filters);
-    res.status(200).json({ tours });
-  } catch (error) {
-    console.error('Error fetching filtered tours:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
+module.exports = {getFilteredTours};

@@ -11,7 +11,7 @@ const paymentRoutes = require('./paymentRoutes');
 const invoiceRoutes = require('./staffRoutes');
 const staffRoutes = require('./staffRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
-const answers = require('./answersRoutes');
+const answers = require('./answerRoutes');
 
 // Mount routes
 router.use('/users', userRoutes);

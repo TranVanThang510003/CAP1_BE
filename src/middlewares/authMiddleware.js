@@ -13,23 +13,22 @@
     }
   };
   
-  module.exports = { verifyStaffRole , authenticateUser };
-  
-  const jwt = require('jsonwebtoken');
+module.exports = { verifyStaffRole , authenticateUser, };
 
-  exports.authenticateToken = (req, res, next) => {
-    const token = req.headers['authorization'];
-  
-    if (!token) {
-      return res.status(401).json({ message: 'Access token required' });
-    }
-  
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) {
-        return res.status(403).json({ message: 'Invalid token' });
-      }
-      req.user = user;
-      next();
-    });
-  };
+const jwt = require('jsonwebtoken');
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(401).json({ message: 'Token không tồn tại' });
+
+  try {
+    // eslint-disable-next-line no-undef
+    const secret = process.env.JWT_SECRET || 'your_secret_key';
+    const decoded = jwt.verify(token.split(' ')[1], secret); // Nếu Bearer token
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(403).json({ message: 'Token không hợp lệ', error: error.message });
+  }
+};
+module.exports = {authenticateToken};
   

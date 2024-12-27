@@ -48,6 +48,7 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 // Thêm route API mới
 app.use('/api/answers', answerRoutes);
 app.use('/api/tours', tourRoutes);
+app.use('/api', apiRoutes);
 
 // Middleware xử lý route không tồn tại
 app.use(notFoundHandler);

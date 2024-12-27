@@ -1,8 +1,8 @@
 const { saveUserAnswers } = require('../services/answerService');
 const { analyzeUserAnswers } = require('../services/aiService');
-const { getFilteredTours } = require('../services/tourService');
+const { getTour } = require('../services/tourService');
 
-exports.saveAnswers = async (req, res) => {
+const saveAnswers = async (req, res) => {
   try {
     const { answers } = req.body;
     const userId = req.user.USER_ID;
@@ -17,18 +17,20 @@ exports.saveAnswers = async (req, res) => {
     console.error('Error saving answers:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
-};
+}
+module.exports = {saveAnswers};
 
-exports.getSuggestedTours = async (req, res) => {
+const getSuggestedTours = async (req, res) => {
   try {
     const userId = req.user.USER_ID;
 
     const preferences = await analyzeUserAnswers(userId);
-    const tours = await getFilteredTours(preferences);
+    const tours = await getTour(preferences);
 
     res.status(200).json({ tours });
   } catch (error) {
     console.error('Error fetching suggested tours:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
-};
+}
+module.exports = {getSuggestedTours};

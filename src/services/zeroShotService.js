@@ -1,10 +1,11 @@
-const { poolPromise } = require('../config/db');
+const { connectToDB } = require('../config/db');
+const sql = require('mssql');
 const axios = require('axios');
 
 class ZeroShotService {
   // Save user answers to the database
   async saveUserAnswers(userId, answers) {
-    const pool = await poolPromise;
+    const pool = await connectToDB(); // Sử dụng connectToDB để lấy pool kết nối
 
     const query = `
       INSERT INTO [dbo].[ANSWER] (ANSWER_NAME, QUESTION_ID, USER_ID)
@@ -35,7 +36,7 @@ class ZeroShotService {
 
   // Fetch user answers and classify them using the AI model
   async classifyUserAnswers(userId) {
-    const pool = await poolPromise;
+    const pool = await connectToDB(); // Sử dụng connectToDB để lấy pool kết nối
 
     const query = `
       SELECT a.ANSWER_NAME
@@ -60,7 +61,7 @@ class ZeroShotService {
 
   // Recommend tours based on classification results
   async recommendTours(classificationResult) {
-    const pool = await poolPromise;
+    const pool = await connectToDB(); // Sử dụng connectToDB để lấy pool kết nối
 
     const query = `
       SELECT t.TOUR_ID, t.TOUR_NAME, t.DESCRIPTION, t.HIGHLIGHTS

@@ -10,9 +10,9 @@ const deleteTour = require('../controllers/publicTourController/deleteTour');
 const { authenticateUser, verifyStaffRole } = require('../middlewares/authMiddleware');
 const getTopBookedTours = require('../controllers/publicTourController/getTopBookedTours');
 const { multipleUpload } = require('../middlewares/uploadMiddlewares');
-const { getSuggestedTours, getFilteredTours } = require('../controllers/tourController'); // Import thêm getFilteredTours
+const { getFilteredTours } = require('../controllers/tourController'); // Import thêm getFilteredTours
 const { authenticateToken } = require('../middlewares/authMiddleware');
-
+const { getSuggestedTours } = require('../controllers/answerController'); 
 // Public tour routes
 router.get('/', authenticateToken, getAllTours); // Updated: Added authenticateToken for all tours
 router.get('/top-tours', authenticateToken, getTopBookedTours); // Updated: Added authenticateToken for top tours

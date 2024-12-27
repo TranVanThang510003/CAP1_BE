@@ -1,6 +1,5 @@
 const { connectToDB } = require('../config/db');
-
-exports.saveUserAnswers = async (userId, answers) => {
+const saveUserAnswers = async (userId, answers) => {
   const pool = await connectToDB();
 
   const query = `
@@ -26,4 +25,5 @@ exports.saveUserAnswers = async (userId, answers) => {
     await transaction.rollback();
     throw new Error('Error saving answers: ' + error.message);
   }
-};
+}
+module.exports ={saveUserAnswers};

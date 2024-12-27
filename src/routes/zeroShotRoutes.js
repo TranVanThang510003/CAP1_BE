@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const zeroShotController = require('../controllers/zeroShotController');
+const ZeroShotController = require('../controllers/zeroShotController');
 
 // Route to handle user answers and recommendations
-router.post('/answers', zeroShotController.handleUserAnswers);
+router.post('/answers', ZeroShotController.handleUserAnswers);
 
 module.exports = router;

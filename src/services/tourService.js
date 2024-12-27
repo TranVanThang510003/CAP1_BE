@@ -1,7 +1,7 @@
 const { connectToDB } = require('../config/db');
 const sql = require('mssql');
 
-exports.getFilteredTours = async (filters) => {
+const getTour = async (filters) => {
   const { tourTypeId, startDate, endDate, minPrice, maxPrice, serviceType, province } = filters;
 
   const pool = await connectToDB();
@@ -44,4 +44,6 @@ exports.getFilteredTours = async (filters) => {
     console.error('Error fetching filtered tours:', error);
     throw new Error('Error fetching filtered tours');
   }
-};
+}
+
+module.exports = { getTour };
